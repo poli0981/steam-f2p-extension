@@ -19,7 +19,8 @@ This extension sits in your browser toolbar while you browse the Steam store. Wh
 4. **Queues** the game locally with editable optional fields
 5. **Pushes** to `scripts/temp_info.jsonl` in your GitHub repository
 
-The companion [free-steam-games-list](https://github.com/poli0981/free-steam-games-list) repository then ingests, validates, and
+The companion [free-steam-games-list](https://github.com/poli0981/free-steam-games-list) repository then ingests,
+validates, and
 catalogs the games automatically via GitHub Actions.
 
 ---
@@ -272,18 +273,18 @@ game are combined (e.g., `EAC + BattlEye`).
 
 ## Legal & Policies
 
-| Document                                      | Description                                         |
-|-----------------------------------------------|-----------------------------------------------------|
-| [LICENSE](LICENSE)                            | GPL-3.0-only                                        |
-| [REQUIREMENTS](REQUIREMENTS.md)               | System requirements, tested environments, dev tools |
-| [DISCLAIMER](DISCLAIMER.md)                   | Warranty disclaimers and warnings                   |
-| [PRIVACY_POLICY](PRIVACY_POLICY.md)           | Data handling and privacy                           |
-| [TERMS_OF_USE](TERMS_OF_USE.md)               | Terms of use / EULA                                 |
-| [SECURITY](SECURITY.md)                       | Vulnerability reporting policy                      |
-| [THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES.md) | Third-party licenses                                |
-| [CODE_OF_CONDUCT](CODE_OF_CONDUCT.md)         | Community standards                                 |
-| [CONTRIBUTING](CONTRIBUTING.md)               | How to contribute                                   |
-| [CHANGELOG](CHANGELOG.md)                     | Version history                                     |
+| Document                                           | Description                                         |
+|----------------------------------------------------|-----------------------------------------------------|
+| [LICENSE](LICENSE)                                 | GPL-3.0-only                                        |
+| [REQUIREMENTS](REQUIREMENTS.md)                    | System requirements, tested environments, dev tools |
+| [DISCLAIMER](docs/DISCLAIMER.md)                   | Warranty disclaimers and warnings                   |
+| [PRIVACY_POLICY](docs/PRIVACY_POLICY.md)           | Data handling and privacy                           |
+| [TERMS_OF_USE](docs/TERMS_OF_USE.md)               | Terms of use / EULA                                 |
+| [SECURITY](SECURITY.md)                            | Vulnerability reporting policy                      |
+| [THIRD_PARTY_NOTICES](docs/THIRD_PARTY_NOTICES.md) | Third-party licenses                                |
+| [CODE_OF_CONDUCT](CODE_OF_CONDUCT.md)              | Community standards                                 |
+| [CONTRIBUTING](CONTRIBUTING.md)                    | How to contribute                                   |
+| [CHANGELOG](CHANGELOG.md)                          | Version history                                     |
 
 ---
 
