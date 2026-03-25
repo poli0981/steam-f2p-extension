@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: "📖 Read Before Opening an Issue"
+    url: "https://github.com/poli0981/steam-f2p-extension/blob/main/CONTRIBUTING.md#opening-an-issue"
+    about: "Please read the contributing guidelines before opening an issue."
+  - name: "🔒 Report a Security Vulnerability"
+    url: "https://github.com/poli0981/steam-f2p-extension/security/advisories/new"
+    about: "Do NOT open a public issue for security vulnerabilities. Use private reporting."
