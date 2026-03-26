@@ -13,15 +13,15 @@
 
 This extension sits in your browser toolbar while you browse the Steam store. When you visit a game page, it:
 
-1. **Detects** game metadata — name, genre, price, developer, anti-cheat, online/offline status
+1. **Detects** game metadata — name, genre, price, developer, publisher, description, platforms, languages, tags,
+   anti-cheat, online/offline status
 2. **Classifies** the game — Free to Play, Free Game, Demo, Playtest, or Paid
 3. **Checks for duplicates** against your GitHub tracker's existing data
-4. **Queues** the game locally with editable optional fields
-5. **Pushes** to `scripts/temp_info.jsonl` in your GitHub repository
+4. **Queues** the game locally with auto-detected info (read-only) and editable fields
+5. **Pushes** the full game data to `scripts/temp_info.jsonl` in your GitHub repository
 
 The companion [free-steam-games-list](https://github.com/poli0981/free-steam-games-list) repository then ingests,
-validates, and
-catalogs the games automatically via GitHub Actions.
+validates, and catalogs the games automatically via GitHub Actions.
 
 ---
 
@@ -35,18 +35,29 @@ catalogs the games automatically via GitHub Actions.
 - **Online/Offline** auto-detection from Steam multiplayer/MMO/co-op categories
 - **Anti-cheat** two-pass detection: Steam structured `.anticheat_section` (primary) + dictionary pattern scan (
   fallback) — 20 systems with kernel/non-kernel classification
+- **Description** extraction from game snippet with full description fallback
+- **Developer** extraction — supports single (`.dev_row`) and multiple (`#appHeaderGridContainer` grid layout)
+  developers, stored as array
+- **Publisher** extraction — same dual-layout support as developer, stored as array
+- **Platform** detection — Windows, macOS, Linux, Steam Play, Steam Deck
+- **Language** table parsing — per-language support matrix (interface, full audio, subtitles)
+- **Full tag list** — all user-defined tags including hidden overflow tags
 - **Auto-notes**: DLC, anti-cheat name, and kernel level info added to queue entries automatically
 
 ### Queue Management
 
 - Persistent local queue (up to 150 games) in `chrome.storage.local`
-- Per-entry editable fields: type, anti-cheat, notes, safety rating, genre override
-- Search and filter within queue
+- **Two-panel card layout**: auto-detected info (read-only) + editable fields (separate collapsible sections)
+- **Genre tag-select dropdown**: tags from detected game → common genre presets → custom text input
+- **Auto field protection**: 12 auto-detected fields locked from user edits
+- Editable fields: type, anti-cheat, genre, notes, safety rating
+- Search and filter within queue (searches name, genre, developer, publisher, tags)
 - Card grid UI with thumbnail previews
 - Clear All with confirmation
 
 ### GitHub Integration
 
+- **Full data push** — all 20 fields serialized to JSONL (auto-detected + user-edited)
 - Push to `scripts/temp_info.jsonl` via GitHub Contents API
 - Remote deduplication against `data.jsonl` + `temp_info.jsonl`
 - SHA conflict detection with automatic retry
@@ -86,21 +97,20 @@ catalogs the games automatically via GitHub Actions.
 
 2. **(Optional) Replace the OpenPGP.js placeholder** if you want GPG signing:
    ```bash
-   # Download the real openpgp.js v6 ESM build
    curl -o lib/openpgp.min.mjs https://unpkg.com/openpgp/dist/openpgp.min.mjs
    ```
 
 3. **Load in Chrome:**
-    - Navigate to `chrome://extensions`
-    - Enable **Developer mode** (top right toggle)
-    - Click **Load unpacked**
-    - Select the `steam-f2p-extension` directory
+   - Navigate to `chrome://extensions`
+   - Enable **Developer mode** (top right toggle)
+   - Click **Load unpacked**
+   - Select the `steam-f2p-extension` directory
 
 4. **Configure:**
-    - Click the extension icon → **Settings**
-    - Enter your GitHub **Owner**, **Repository**, **Branch**, and **Token**
-    - Click **Test Connection** to verify
-    - (Optional) Configure committer identity, GPG signing, auto-push threshold
+   - Click the extension icon → **Settings**
+   - Enter your GitHub **Owner**, **Repository**, **Branch**, and **Token**
+   - Click **Test Connection** to verify
+   - (Optional) Configure committer identity, GPG signing, auto-push threshold
 
 ---
 
@@ -118,8 +128,9 @@ catalogs the games automatically via GitHub Actions.
 
 The toolbar popup shows:
 
-- **Detected game** card with thumbnail, name, genre, badges (Free to Play / Free Game / Paid / Demo / Playtest /
-  Online / Anti-cheat)
+- **Detected game** card with thumbnail, name, genre, developer, platforms, language count, description preview
+- **Classification badges**: Free to Play / Free Game / Paid / Demo / Playtest / Online / Anti-cheat (with kernel
+  warning)
 - **Duplicate status** — "already in tracker" or "already in queue"
 - **Queue summary** — count and progress bar
 - **Quick actions** — Push, Open Queue, Open Settings
@@ -129,9 +140,11 @@ The toolbar popup shows:
 
 Open from popup → **Queue** button. Full-page management with:
 
-- Card grid showing all queued games
-- Click **▾ Edit optional fields** on any card to set type, anti-cheat, notes, safety, genre
-- Search bar to filter by name, genre, or developer
+- Card grid showing all queued games with thumbnails
+- **▾ Game Info (auto-detected)** — collapsible read-only panel: description, release date, developer, publisher,
+  platforms, languages, tags (as chips)
+- **▾ Edit fields** — collapsible editable panel: genre (tag-select dropdown), type, anti-cheat, notes, safety
+- Search bar to filter by name, genre, developer, publisher, or tags
 - **Push All** / **Clear All** actions
 - Keyboard: `Ctrl+F` or `/` to search, `Escape` to clear
 
@@ -149,10 +162,60 @@ Open from popup → **Settings** button. Sections:
 
 ---
 
+## Push Data Format
+
+Each game is pushed as a single JSONL line to `temp_info.jsonl` containing all detected and user-edited data. Empty
+values and defaults are omitted for compactness.
+
+```jsonc
+{
+  // Identity
+  "link": "https://store.steampowered.com/app/4301370/",
+  "name": "Linsips",
+  // Classification
+  "genre": "Action",
+  "type_game": "offline",
+  "free_type": "f2p",
+  // Auto-detected metadata
+  "developer": ["MILQ Games"],
+  "publisher": ["MILQ Games"],
+  "release_date": "18 Mar, 2026",
+  "description": "A retro puzzle-action game...",
+  "header_image": "https://shared.akamai.steamstatic.com/...",
+  // Anti-cheat (if detected)
+  "anti_cheat": "EAC",
+  "anti_cheat_note": "Easy Anti-Cheat [Non-Kernel]",
+  "is_kernel_ac": false,
+  // Supplementary
+  "platforms": ["Windows", "Linux"],
+  "languages": ["English", "Japanese", "Simplified Chinese"],
+  "language_details": [
+    {"name": "English", "interface": true, "audio": false, "subtitles": false}
+  ],
+  "tags": ["Action", "Puzzle", "2D", "Pixel Graphics", "Free to Play"],
+  // User annotations
+  "notes": "Có DLC trả phí",
+  "safe": "yes",
+  // Metadata
+  "added_at": "2026-03-26T12:00:00Z"
+}
+```
+
+Multi-developer example:
+
+```jsonc
+{
+  "developer": ["DONTNOD Entertainment", "Feral Interactive (Mac)", "Feral Interactive (Linux)"],
+  "publisher": ["Square Enix", "Feral interactive (Mac)", "Feral Interactive (Linux)"]
+}
+```
+
+---
+
 ## Architecture
 
 ```
-steam-f2p-extension/          26 files · 211 KB · 0 npm dependencies
+steam-f2p-extension/          26 files · 0 npm dependencies
 ├── manifest.json             Extension config (MV3, ES modules)
 ├── background/               Service worker modules
 │   ├── sw.js                 Entry point & message router
@@ -160,11 +223,11 @@ steam-f2p-extension/          26 files · 211 KB · 0 npm dependencies
 │   ├── gpg-signer.js         GPG key management & commit signing
 │   ├── dedup-checker.js      Remote + local deduplication
 │   ├── push-handler.js       Push orchestrator (signed & unsigned)
-│   └── queue-manager.js      Queue CRUD with cap enforcement
+│   └── queue-manager.js      Queue CRUD with cap + field protection
 ├── content/
-│   └── detector.js           Steam page parser (price, DLC, anti-cheat)
+│   └── detector.js           Steam page parser (11 extractors, dual-layout)
 ├── popup/                    Toolbar popup (HTML + CSS + JS)
-├── queue/                    Full-page queue manager
+├── queue/                    Full-page queue manager (dual-panel cards)
 ├── settings/                 Full-page settings
 ├── shared/                   Constants, storage, logger, utils, theme
 ├── lib/
@@ -178,17 +241,22 @@ steam-f2p-extension/          26 files · 211 KB · 0 npm dependencies
 Steam Store Page
        │
        ▼
- [Content Script]  ──  Extracts game metadata from DOM + schema.org
-       │
+ [Content Script]  ──  11 extractors: name, price, genre, developer(s),
+       │               publisher(s), description, platforms, languages,
+       │               tags, anti-cheat, release date
+       │               Dual-layout: .dev_row (single) / grid (multi)
        ▼
- [Service Worker]  ──  Validates, dedup checks (local + remote)
-       │
+ [Service Worker]  ──  Validates F2P, dedup checks (local + remote),
+       │               merges auto fields + auto-notes
        ▼
  [Queue Storage]   ──  chrome.storage.local (up to 150 entries)
-       │
+       │               Auto fields: read-only (12 fields, arrays for dev/pub)
+       │               Editable fields: genre, type, AC, notes, safe
        ▼
- [Push Handler]    ──  Appends to temp_info.jsonl on GitHub
-       │                (Contents API or signed Git Database API)
+ [Push Handler]    ──  Serializes full entry (20 fields) to JSONL
+       │               developer/publisher as arrays in output
+       │               Appends to temp_info.jsonl on GitHub
+       │               (Contents API or signed Git Database API)
        ▼
  [GitHub Repo]     ──  CI/CD ingests, validates, catalogs
 ```
@@ -247,9 +315,6 @@ description text against a dictionary of known patterns.
 > structured section, the actual kernel/non-kernel classification from the page is used. The popup displays kernel-level
 > AC with a red `⚠ Kernel` badge.
 
-Anti-cheat info (full name + kernel level) is automatically added to queue entry notes. Multiple AC systems on the same
-game are combined (e.g., `EAC + BattlEye`).
-
 ---
 
 ## Configuration Reference
@@ -299,7 +364,7 @@ game are combined (e.g., `EAC + BattlEye`).
 ## Disclaimer
 
 This extension is provided **as-is** without warranty. It is not affiliated with Valve, Steam, or GitHub. Game
-information extracted may not be 100% accurate. See [DISCLAIMER.md](DISCLAIMER.md) for full details.
+information extracted may not be 100% accurate. See [DISCLAIMER.md](docs/DISCLAIMER.md) for full details.
 
 ---
 

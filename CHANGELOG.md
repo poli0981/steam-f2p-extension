@@ -7,6 +7,79 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.1.0] - 2026-03-26
+
+### Added
+
+#### New Auto-Detected Fields
+
+- **Description** extraction from `.game_description_snippet` with full description fallback
+- **Developer** extraction rewritten — now returns `string[]` to support multiple developers; handles both `.dev_row`
+  layout (single dev) and `#appHeaderGridContainer` grid layout (≥2 devs)
+- **Publisher** extraction rewritten — same dual-layout support as developer, returns `string[]`
+- **Release date** extraction — added fallback to `#appHeaderGridContainer` grid layout (`.grid_label` "Released")
+- **Platform** detection from `.platform_img` classes — Windows, macOS, Linux, Steam Play, Steam Deck — with system
+  requirements tab fallback
+- **Language** table parsing from `#languageTable` — extracts per-language support matrix (interface, full audio,
+  subtitles) and flat language name list
+- **Full tag list** extraction from `.glance_tags.popular_tags a` — includes hidden overflow tags that Steam collapses
+  by default
+- **`extractFromGridLayout()` helper** — shared function for parsing Steam's `#appHeaderGridContainer` grid layout,
+  used by developer, publisher, and release date extractors
+
+#### Queue UI Redesign
+
+- **Two-panel card layout** — each game card now has two separate collapsible sections:
+  - **Game Info (auto-detected)** — read-only panel showing description, release date, developer, publisher, platforms,
+    languages, and tags as styled chips
+  - **Edit fields** — user-editable panel for genre, type, anti-cheat, notes, and safety rating
+- **Genre tag-select dropdown** — replaces free-text genre input with a smart dropdown:
+  - "From this game" group: tags detected from the current Steam page (prioritized)
+  - "Common genres" group: 30 preset genres (Action, RPG, Strategy, etc.)
+  - "Other (type custom)..." option: reveals a text input for custom genre entry
+  - Automatically shows custom input when current genre doesn't match any list
+- **Tag chips** in auto-detected panel — all Steam tags displayed as compact styled badges
+- **Auto field protection** — auto-detected fields (description, release_date, developer, publisher, platforms,
+  languages, tags, etc.) are locked and cannot be overwritten via the edit UI
+
+#### Popup Enhancements
+
+- **Extra info line** below game name showing platforms, language count, and publisher (when different from developer)
+- **Description preview** — truncated game description shown in the detected game card
+
+#### Push: Full Data Export
+
+- `toTempEntry()` now serializes **all 20 fields** to JSONL — both auto-detected and user-edited
+- Fields organized in 7 logical groups: Identity → Classification → Metadata → Anti-cheat → Supplementary →
+  Annotations → Extension metadata
+- Empty values, empty arrays, and defaults (e.g., `anti_cheat: "-"`) are omitted to keep JSONL compact
+- New fields in push output: `description`, `publisher`, `platforms`, `languages`, `language_details`, `tags`,
+  `free_type`, `anti_cheat_note`, `is_kernel_ac`, `added_at`
+
+### Changed
+
+- **detector.js** — rewritten with 5 new extractor functions + `extractFromGridLayout()` helper; `extractDeveloper()`
+  and `extractPublisher()` now return `string[]` with dual-layout support (`.dev_row` for single, `#appHeaderGridContainer`
+  for multiple); `extractReleaseDate()` added grid layout fallback; anti-cheat database expanded from 14 to 20 systems
+  (added KSS, NetEase GS, Nexon GP, miHoYo AC, AhnLab, Wellbia)
+- **constants.js** — `OPTIONAL_FIELDS` split into `AUTO_FIELDS` (read-only) and `EDITABLE_FIELDS` (user-modifiable);
+  `developer` and `publisher` type changed from `"text"` to `"list"`; added `GENRE_PRESETS` (30 common genres);
+  `OPTIONAL_FIELDS` kept as legacy alias
+- **utils.js** — `makeQueueEntry()` now populates all new auto fields; `developer` and `publisher` default to `[]`
+  instead of `""`
+- **queue-manager.js** — `addToQueue()` merges all new auto fields; `updateEntry()` enforces field protection via
+  `AUTO_LOCKED_FIELDS` set (12 fields) and `EDITABLE_FIELD_KEYS` set (5 fields); rejected fields logged at warn level
+- **push-handler.js** — `toTempEntry()` rewritten to include full game data; `developer` and `publisher` arrays
+  checked with `Array.isArray()` + `.length > 0` before inclusion
+- **queue.css** — new styles for auto-detected panel, tag chips, genre dropdown, optgroup labels, two-toggle layout
+- **popup.html** — added `#detectedExtraInfo` and `#detectedDesc` elements
+- **popup.js** — renders extra info line and description preview; developer and publisher displayed via `Array.isArray()`
+  check + `join(", ")`; publisher comparison against developer uses joined strings
+- **queue.js** — complete rewrite of `createCard()` with dual-panel layout, `createGenreField()` tag-select builder;
+  developer/publisher rendered as joined strings from arrays; search filter handles array fields
+
+---
+
 ## [1.0.0] - 2026-03-25
 
 ### Added
@@ -110,4 +183,6 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 [1.0.0]: https://github.com/poli0981/steam-f2p-extension/releases/tag/v1.0.0
 
-[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.0.0...HEAD
+[1.1.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.0.0...v1.1.0
+
+[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.1.0...HEAD
