@@ -1,8 +1,11 @@
 /* SPDX-License-Identifier: GPL-3.0-only
- * Copyright (c) 2026 Steam F2P Tracker Contributors
+ * Copyright (c) 2026 poli0981 & contributor(s)
  */
 /*
  * Queue page styles.
+ * Two collapsible panels per card:
+ *   1. Auto-detected info (read-only, muted styling)
+ *   2. Editable fields (interactive, accent borders)
  */
 
 body {
@@ -76,11 +79,14 @@ body {
 /* ── Queue Grid ── */
 .queue-grid {
     display               : grid;
-    grid-template-columns : repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns : repeat(auto-fill, minmax(320px, 1fr));
     gap                   : var(--space-lg);
 }
 
-/* ── Game Card ── */
+/* ════════════════════════════════════════════════════════════
+   Game Card
+   ════════════════════════════════════════════════════════════ */
+
 .game-card {
     background    : var(--bg-card);
     border        : 1px solid var(--border-subtle);
@@ -94,13 +100,14 @@ body {
     box-shadow   : var(--shadow-sm);
 }
 
+/* ── Card header (thumbnail) ── */
 .game-card-header {
     position : relative;
 }
 
 .game-card-thumb {
     width      : 100%;
-    height     : 120px;
+    height     : 130px;
     object-fit : cover;
     display    : block;
     background : var(--bg-secondary);
@@ -133,6 +140,7 @@ body {
     color      : #fff;
 }
 
+/* ── Card body ── */
 .game-card-body {
     padding : var(--space-md);
 }
@@ -159,15 +167,9 @@ body {
     border-radius : 3px;
 }
 
-/* ── Optional Fields (expandable) ── */
-.game-card-fields {
-    padding : 0 var(--space-md) var(--space-md);
-    display : none;
-}
-
-.game-card-fields.open {
-    display : block;
-}
+/* ════════════════════════════════════════════════════════════
+   Toggle buttons (shared style for both panels)
+   ════════════════════════════════════════════════════════════ */
 
 .game-card-toggle {
     width      : 100%;
@@ -186,6 +188,96 @@ body {
     color : var(--accent);
 }
 
+.auto-toggle {
+    color      : var(--text-muted);
+    font-style : italic;
+}
+
+.edit-toggle {
+    color   : var(--accent);
+    opacity : 0.7;
+}
+
+.edit-toggle:hover {
+    opacity : 1;
+}
+
+/* ════════════════════════════════════════════════════════════
+   Auto-detected info panel (read-only)
+   ════════════════════════════════════════════════════════════ */
+
+.game-card-auto {
+    display    : none;
+    padding    : var(--space-sm) var(--space-md) var(--space-md);
+    background : rgba(0, 0, 0, 0.15);
+    border-top : 1px solid var(--border-subtle);
+}
+
+.game-card-auto.open {
+    display : block;
+}
+
+.auto-row {
+    display       : flex;
+    gap           : var(--space-sm);
+    margin-bottom : var(--space-sm);
+    line-height   : 1.4;
+}
+
+.auto-row:last-child {
+    margin-bottom : 0;
+}
+
+.auto-label {
+    font-size      : var(--font-xs);
+    color          : var(--text-muted);
+    min-width      : 80px;
+    flex-shrink    : 0;
+    font-weight    : 500;
+    text-transform : uppercase;
+    letter-spacing : 0.3px;
+    padding-top    : 1px;
+}
+
+.auto-value {
+    font-size  : var(--font-xs);
+    color      : var(--text-secondary);
+    word-break : break-word;
+}
+
+/* ── Tag chips (in auto panel) ── */
+.auto-tags {
+    display   : flex;
+    flex-wrap : wrap;
+    gap       : 3px;
+    flex      : 1;
+}
+
+.tag-chip {
+    display       : inline-block;
+    font-size     : 10px;
+    padding       : 1px 6px;
+    border-radius : 3px;
+    background    : var(--bg-secondary);
+    color         : var(--text-secondary);
+    white-space   : nowrap;
+}
+
+/* ════════════════════════════════════════════════════════════
+   Editable fields panel
+   ════════════════════════════════════════════════════════════ */
+
+.game-card-fields {
+    padding    : 0 var(--space-md) var(--space-md);
+    display    : none;
+    border-top : 1px solid var(--border-subtle);
+}
+
+.game-card-fields.open {
+    display     : block;
+    padding-top : var(--space-sm);
+}
+
 .field-row {
     display       : flex;
     align-items   : center;
@@ -193,11 +285,16 @@ body {
     margin-bottom : var(--space-sm);
 }
 
+.field-row:last-child {
+    margin-bottom : 0;
+}
+
 .field-label {
     font-size   : var(--font-xs);
     color       : var(--text-muted);
     width       : 70px;
     flex-shrink : 0;
+    font-weight : 500;
 }
 
 .field-input {
@@ -208,4 +305,32 @@ body {
 .field-input .select {
     padding   : var(--space-xs) var(--space-sm);
     font-size : var(--font-xs);
+}
+
+/* ── Genre tag-select ── */
+.genre-field {
+    flex-wrap : wrap;
+}
+
+.genre-select-wrap {
+    display        : flex;
+    flex-direction : column;
+    gap            : var(--space-xs);
+}
+
+.genre-select {
+    font-size : var(--font-xs) !important;
+}
+
+.genre-custom-input {
+    font-size : var(--font-xs) !important;
+    padding   : var(--space-xs) var(--space-sm) !important;
+    border    : 1px dashed var(--accent) !important;
+}
+
+/* Option group labels in dropdown */
+.optgroup-label {
+    font-weight : 600;
+    color       : var(--text-muted);
+    font-size   : 10px;
 }

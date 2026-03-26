@@ -46,9 +46,19 @@
                         <span class = "detected-sep">·</span>
                         <span id = "detectedDev"></span>
                     </div>
+                    <!-- New: extra info line (platforms, langs, publisher) -->
+                    <div
+                            class = "detected-extra text-xs text-muted" id = "detectedExtraInfo"
+                            style = "display:none; margin-top:2px;"
+                    ></div>
                     <div class = "detected-badges" id = "detectedBadges"></div>
                 </div>
             </div>
+            <!-- New: description preview -->
+            <div
+                    class = "detected-desc text-xs text-muted" id = "detectedDesc"
+                    style = "display:none; margin-top:6px; line-height:1.4; opacity:0.8;"
+            ></div>
             <button class = "btn btn-success w-full" id = "addBtn" style = "margin-top:8px">
                 <svg
                         width = "14" height = "14" viewBox = "0 0 24 24" fill = "none" stroke = "currentColor"
@@ -85,9 +95,9 @@
                     <rect x = "14" y = "14" width = "7" height = "7"/>
                 </svg>
                 <span class = "queue-count">
-            <strong id = "queueCount">0</strong>
-            <span class = "text-muted">/ 150</span>
-          </span>
+                    <strong id = "queueCount">0</strong>
+                    <span class = "text-muted">/ 150</span>
+                </span>
             </div>
             <button class = "btn btn-primary btn-sm" id = "pushBtn" disabled>
                 <svg

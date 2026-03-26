@@ -7,16 +7,16 @@
  * Link normalization, appid extraction, time formatting.
  */
 
-import {APPID_RE, STEAM_STORE_URL} from "./constants.js";
+import { APPID_RE, STEAM_STORE_URL } from "./constants.js";
 
 /**
  * Extract numeric appid from a Steam store URL.
  * @param {string} link
  * @returns {string|null}
  */
-export function extractAppId (link) {
+export function extractAppId(link) {
     if (!link) return null;
-    const m = link.match (APPID_RE);
+    const m = link.match(APPID_RE);
     return m ? m[1] : null;
 }
 
@@ -26,17 +26,15 @@ export function extractAppId (link) {
  * @param {string} raw
  * @returns {string|null} Canonical URL or null
  */
-export function normalizeLink (raw) {
+export function normalizeLink(raw) {
     if (!raw) return null;
-    raw = raw.trim ()
-             .replace (/\/+$/, "");
+    raw = raw.trim().replace(/\/+$/, "");
 
-    // Bare number
-    if (/^\d+$/.test (raw)) {
+    if (/^\d+$/.test(raw)) {
         return `${STEAM_STORE_URL}${raw}/`;
     }
 
-    const appid = extractAppId (raw);
+    const appid = extractAppId(raw);
     if (appid) {
         return `${STEAM_STORE_URL}${appid}/`;
     }
@@ -48,9 +46,8 @@ export function normalizeLink (raw) {
  * Get current UTC timestamp in ISO format.
  * @returns {string}
  */
-export function nowISO () {
-    return new Date ().toISOString ()
-                      .replace (/\.\d{3}Z$/, "Z");
+export function nowISO() {
+    return new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
 }
 
 /**
@@ -58,15 +55,13 @@ export function nowISO () {
  * @param {string} iso - ISO timestamp
  * @returns {string}
  */
-export function formatTime (iso) {
+export function formatTime(iso) {
     if (!iso) return "—";
     try {
-        const d = new Date (iso);
-        const pad = (n) => String (n)
-            .padStart (2, "0");
-        return `${d.getFullYear ()}-${pad (d.getMonth () + 1)}-${pad (d.getDate ())} ${pad (d.getHours ())}:${pad (d.getMinutes ())}`;
-    }
-    catch {
+        const d = new Date(iso);
+        const pad = (n) => String(n).padStart(2, "0");
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    } catch {
         return iso;
     }
 }
@@ -77,9 +72,9 @@ export function formatTime (iso) {
  * @param {number} max
  * @returns {string}
  */
-export function truncate (str, max = 50) {
+export function truncate(str, max = 50) {
     if (!str || str.length <= max) return str || "";
-    return str.slice (0, max - 3) + "...";
+    return str.slice(0, max - 3) + "...";
 }
 
 /**
@@ -87,9 +82,9 @@ export function truncate (str, max = 50) {
  * @param {string} str
  * @returns {string}
  */
-export function sanitize (str) {
+export function sanitize(str) {
     if (!str) return "";
-    const div = document.createElement ("div");
+    const div = document.createElement("div");
     div.textContent = str;
     return div.innerHTML;
 }
@@ -100,33 +95,46 @@ export function sanitize (str) {
  * @param {number} ms
  * @returns {Function}
  */
-export function debounce (fn, ms = 300) {
+export function debounce(fn, ms = 300) {
     let timer;
     return (...args) => {
-        clearTimeout (timer);
-        timer = setTimeout (() => fn (...args), ms);
+        clearTimeout(timer);
+        timer = setTimeout(() => fn(...args), ms);
     };
 }
 
 /**
  * Create a game entry skeleton from detected data.
+ * Separates auto-detected (immutable) fields from user-editable fields.
+ *
  * @param {object} detected - Data from content script
  * @returns {object}
  */
-export function makeQueueEntry (detected) {
+export function makeQueueEntry(detected) {
     return {
-        link: normalizeLink (detected.link || detected.url || ""),
+        // ── Identity ──
+        link: normalizeLink(detected.link || detected.url || ""),
         name: detected.name || "",
-        genre: detected.genre || "",
-        developer: detected.developer || "",
         header_image: detected.header_image || "",
+
+        // ── Auto-detected fields (read-only in queue UI) ──
+        description: detected.description || "",
         release_date: detected.release_date || "",
-        // Auto-detected or defaults
+        developer: detected.developer || [],       // string[]
+        publisher: detected.publisher || [],        // string[]
+        platforms: detected.platforms || [],
+        languages: detected.languages || [],
+        language_details: detected.language_details || [],
+        tags: detected.tags || [],
+
+        // ── User-editable fields ──
+        genre: detected.genre || "",
         type_game: detected.type_game || "offline",
         anti_cheat: detected.anti_cheat || "-",
         notes: "",
         safe: "?",
-        // Metadata
-        added_at: nowISO (),
+
+        // ── Metadata ──
+        added_at: nowISO(),
     };
 }
