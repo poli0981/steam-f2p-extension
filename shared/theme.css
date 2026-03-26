@@ -491,3 +491,29 @@ a:hover {
     clip     : rect(0, 0, 0, 0);
     border   : 0;
 }
+
+.app-footer {
+    display        : flex;
+    flex-direction : column;
+    align-items    : center;
+    gap            : 2px;
+    padding        : var(--space-md) var(--space-lg);
+    border-top     : 1px solid var(--border-subtle);
+    text-align     : center;
+}
+
+.app-footer span {
+    font-size : var(--font-xs);
+    color     : var(--text-muted);
+}
+
+.app-footer a {
+    color           : var(--accent);
+    text-decoration : none;
+    font-weight     : 500;
+}
+
+.app-footer a:hover {
+    color           : var(--accent-hover);
+    text-decoration : underline;
+}
