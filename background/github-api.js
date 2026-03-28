@@ -174,6 +174,66 @@ export async function getFileContent (path, opts = {}) {
     return result;
 }
 
+
+// ════════════════════════════════════════════════════════════
+// PATCH for background/github-api.js
+// ════════════════════════════════════════════════════════════
+//
+// 1. Add this function AFTER getFileContent() and BEFORE putFileContent()
+// 2. Export it: add getRawFileContent to the module exports
+//
+// WHY: GitHub Contents API returns base64 content only for files ≤ 1 MB.
+// data.jsonl is 1.2 MB+ → Contents API returns { sha, size, download_url }
+// but content is null → decodeBase64("") → empty string → 0 appids.
+//
+// FIX: Fetch directly from raw.githubusercontent.com — no base64,
+// no size limit, plain UTF-8 text response.
+// ════════════════════════════════════════════════════════════
+
+/**
+ * Fetch raw file content directly from raw.githubusercontent.com.
+ *
+ * Bypasses the Contents API entirely — no base64 encoding, no 1 MB limit.
+ * Returns raw UTF-8 text.
+ *
+ * Use case: files > 1 MB where Contents API returns metadata but no content.
+ *
+ * @param {string} path - File path in repo (e.g. "scripts/data.jsonl")
+ * @returns {Promise<string|null>} Raw file content or null if not found
+ */
+export async function getRawFileContent(path) {
+    const cfg = await getConfig();
+    const url = `https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch}/${path}`;
+
+    let resp;
+    try {
+        resp = await fetch(url, {
+            headers: {
+                // Token needed for private repos; harmless for public repos
+                Authorization: `Bearer ${cfg.token}`,
+                Accept: "text/plain",
+            },
+        });
+    } catch (err) {
+        await logError("github", `Network error fetching raw ${path}: ${err.message}`);
+        throw { type: "network", status: 0, message: `Network error: ${err.message}` };
+    }
+
+    if (!resp.ok) {
+        if (resp.status === 404) {
+            await logDebug("github", `Raw file not found: ${path}`);
+            return null;
+        }
+        const err = classifyError(resp.status, "");
+        await logError("github", `Raw fetch failed for ${path}: ${err.message}`, { status: resp.status });
+        throw err;
+    }
+
+    const content = await resp.text();
+    await logDebug("github", `Fetched raw ${path} (${(content.length / 1024).toFixed(0)} KB)`);
+    return content;
+}
+
 /**
  * Create or update a file via the GitHub Contents API.
  *
