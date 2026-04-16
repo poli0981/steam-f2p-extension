@@ -10,7 +10,8 @@
 // ── GitHub API ──
 export const GITHUB_API_BASE = "https://api.github.com";
 // ── Repository paths ──
-export const REPO_DATA_PATH = "scripts/data.jsonl";
+export const REPO_INDEX_PATH = "data/index.json";
+export const REPO_DATA_DIR = "data/";
 export const REPO_TEMP_PATH = "scripts/temp_info.jsonl";
 
 // ── Steam ──
