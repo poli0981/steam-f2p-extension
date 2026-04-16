@@ -5,19 +5,16 @@
 /**
  * Deduplication checker.
  *
- * Fetches data.jsonl + temp_info.jsonl from GitHub, extracts all known appids,
- * and provides O(1) duplicate lookups. Results are cached with configurable TTL.
+ * Reads data/index.json to discover data files (data_001.jsonl, data_002.jsonl, ...),
+ * fetches each in parallel, and also fetches temp_info.jsonl for pending entries.
+ * Extracts all known appids and provides O(1) duplicate lookups.
+ * Results are cached with configurable TTL.
  *
- * IMPORTANT: data.jsonl may exceed 1 MB. The GitHub Contents API only returns
- * base64-encoded content for files ≤ 1 MB. For larger files, the API returns
- * metadata (sha, size, download_url) but content is null.
- *
- * This module handles both cases:
- *   - ≤ 1 MB: getFileContent() via Contents API
- *   - > 1 MB: getRawFileContent() via raw.githubusercontent.com
+ * For files > 1 MB the Contents API returns metadata but no content;
+ * fetchFileContent() handles this via raw.githubusercontent.com fallback.
  */
 
-import { REPO_DATA_PATH, REPO_TEMP_PATH } from "../shared/constants.js";
+import { REPO_INDEX_PATH, REPO_DATA_DIR, REPO_TEMP_PATH } from "../shared/constants.js";
 import { loadQueue, loadCachedAppIds, saveCachedAppIds, loadSettings } from "../shared/storage.js";
 import { extractAppId } from "../shared/utils.js";
 import { logDebug, logInfo, logWarn } from "../shared/logger.js";
@@ -117,8 +114,37 @@ async function fetchFileContent(path, forceRefresh) {
 }
 
 /**
+ * Fetch and parse data/index.json to discover data files.
+ *
+ * @param {boolean} forceRefresh - Bypass cache
+ * @returns {Promise<{files: {name: string, count: number}[]}>} Parsed index or empty
+ */
+async function fetchIndexFile(forceRefresh) {
+    try {
+        const file = await getFileContent(REPO_INDEX_PATH, {
+            useCache: !forceRefresh,
+            allowMissing: true,
+        });
+
+        if (!file || !file.content || !file.content.trim()) {
+            await logWarn("dedup", "data/index.json: not found or empty");
+            return { files: [] };
+        }
+
+        const index = JSON.parse(file.content);
+        await logInfo("dedup", `data/index.json: ${(index.files || []).length} file(s)`);
+        return index;
+    } catch (err) {
+        await logWarn("dedup", `Failed to fetch/parse data/index.json: ${err.message || err}`);
+        return { files: [] };
+    }
+}
+
+/**
  * Fetch all known appids from the remote repository.
- * Fetches both data.jsonl (main, possibly > 1 MB) and temp_info.jsonl (pending).
+ *
+ * Reads data/index.json to discover data files, fetches each in parallel,
+ * then also fetches scripts/temp_info.jsonl for pending entries.
  *
  * @param {boolean} [forceRefresh=false] - Bypass cache
  * @returns {Promise<Set<string>>} Set of known appid strings
@@ -151,19 +177,33 @@ export async function fetchRemoteAppIds(forceRefresh = false) {
 
     const allAppIds = [];
 
-    // 1) data.jsonl — main data store (may be > 1 MB!)
-    try {
-        const content = await fetchFileContent(REPO_DATA_PATH, forceRefresh);
-        if (content) {
-            const ids = extractAppIdsFromJSONL(content);
-            allAppIds.push(...ids);
-            await logInfo("dedup",
-                          `data.jsonl: ${ids.length} appids (${(content.length / 1024).toFixed(0)} KB)`);
-        } else {
-            await logWarn("dedup", "data.jsonl: empty or not found");
+    // 1) Fetch data/index.json → discover data files
+    const index = await fetchIndexFile(forceRefresh);
+
+    if (index.files && index.files.length > 0) {
+        // Fetch all data files in parallel
+        const results = await Promise.allSettled(
+            index.files.map(async (entry) => {
+                const path = REPO_DATA_DIR + entry.name;
+                const content = await fetchFileContent(path, forceRefresh);
+                if (content) {
+                    const ids = extractAppIdsFromJSONL(content);
+                    await logInfo("dedup",
+                                  `${entry.name}: ${ids.length} appids (${(content.length / 1024).toFixed(0)} KB)`);
+                    return ids;
+                }
+                await logWarn("dedup", `${entry.name}: empty or not found`);
+                return [];
+            })
+        );
+
+        for (const result of results) {
+            if (result.status === "fulfilled") {
+                allAppIds.push(...result.value);
+            } else {
+                await logWarn("dedup", `Data file fetch failed: ${result.reason?.message || result.reason}`);
+            }
         }
-    } catch (err) {
-        await logWarn("dedup", `Failed to fetch data.jsonl: ${err.message || err}`);
     }
 
     // 2) temp_info.jsonl — pending ingest (usually small)
