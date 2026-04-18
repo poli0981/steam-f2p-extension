@@ -32,9 +32,57 @@ chrome.runtime.onInstalled.addListener(async (details) => {
 // ── Tab-level detected game cache (per tab, volatile) ──
 const detectedGames = new Map();
 
+// ── Extension-page tab registry (singleton queue / settings tabs) ──
+// Maps extension-relative path → tabId. The sw creates these tabs itself,
+// so it knows their ids without needing the "tabs" permission (which would
+// be required to use chrome.tabs.query({url}) reliably across windows).
+const extensionTabs = new Map();
+
 chrome.tabs.onRemoved.addListener((tabId) => {
     detectedGames.delete(tabId);
+    // Drop the tab from the extension registry so the next open request
+    // creates a fresh tab instead of trying to focus a dead id.
+    for (const [path, id] of extensionTabs.entries()) {
+        if (id === tabId) extensionTabs.delete(path);
+    }
 });
+
+/**
+ * Open (or focus) an extension-owned page as a singleton tab.
+ *
+ * The sw keeps a map of the tabs it has created, so this works across
+ * windows and from any trigger (popup click regardless of which tab is
+ * active) without needing the broader "tabs" manifest permission.
+ *
+ * If the cached tabId is stale (tab closed between onRemoved and this
+ * call), the update throws and we fall through to creating a fresh tab.
+ *
+ * @param {string} path - Extension-relative path (e.g. "queue/queue.html")
+ * @returns {Promise<chrome.tabs.Tab>}
+ */
+async function openExtensionPage(path) {
+    const existingId = extensionTabs.get(path);
+    if (existingId !== undefined) {
+        try {
+            const tab = await chrome.tabs.update(existingId, { active: true });
+            if (tab && tab.windowId !== undefined) {
+                await chrome.windows.update(tab.windowId, { focused: true });
+            }
+            return tab;
+        } catch (err) {
+            // Tab was removed but onRemoved hasn't fired yet — drop and
+            // fall through to create.
+            extensionTabs.delete(path);
+        }
+    }
+
+    const url = chrome.runtime.getURL(path);
+    const tab = await chrome.tabs.create({ url });
+    if (tab && tab.id !== undefined) {
+        extensionTabs.set(path, tab.id);
+    }
+    return tab;
+}
 
 // ── Badge update helper ──
 
@@ -235,11 +283,27 @@ async function handleMessage(message, sender) {
             return {ok: true};
         }
 
+        // ── Singleton tab open (Queue / Settings) ──
+        case MSG.OPEN_EXTENSION_PAGE: {
+            const path = data?.path;
+            if (!path || typeof path !== "string") {
+                return { ok: false, error: "No path provided" };
+            }
+            try {
+                const tab = await openExtensionPage(path);
+                return { ok: true, data: { tabId: tab?.id ?? null } };
+            } catch (err) {
+                await logError("sw", `openExtensionPage failed: ${err.message || err}`, { path });
+                return { ok: false, error: err.message || "Failed to open tab" };
+            }
+        }
+
         // ── Reset ──
         case MSG.RESET_EXTENSION: {
             await logWarn("settings", "Extension reset initiated");
             await storageClearAll();
             detectedGames.clear();
+            extensionTabs.clear();
             clearDedupCache();
             clearGitHubCache();
             await updateBadge();
