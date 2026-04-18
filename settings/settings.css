@@ -15,14 +15,20 @@ body {
     padding   : var(--space-xl);
 }
 
-/* ── Header ── */
+/* ── Header — sticky translucent bar ── */
 .page-header {
-    display         : flex;
-    align-items     : center;
-    justify-content : space-between;
-    margin-bottom   : var(--space-xl);
-    padding-bottom  : var(--space-lg);
-    border-bottom   : 1px solid var(--border);
+    position                : sticky;
+    top                     : 0;
+    z-index                 : 10;
+    display                 : flex;
+    align-items             : center;
+    justify-content         : space-between;
+    margin                  : calc(-1 * var(--space-xl)) calc(-1 * var(--space-xl)) var(--space-xl);
+    padding                 : var(--space-lg) var(--space-xl);
+    background              : var(--bg-tertiary-translucent);
+    backdrop-filter         : blur(12px) saturate(180%);
+    -webkit-backdrop-filter : blur(12px) saturate(180%);
+    border-bottom           : 1px solid var(--border);
 }
 
 .header-icon { color : var(--accent); }
@@ -218,11 +224,13 @@ body {
 }
 
 .log-entries {
-    max-height  : 360px;
-    overflow-y  : auto;
-    font-family : var(--font-mono);
-    font-size   : 11px;
-    line-height : 1.6;
+    max-height           : 360px;
+    overflow-y           : auto;
+    font-family          : var(--font-mono);
+    font-size            : 11px;
+    line-height          : 1.6;
+    font-variant-numeric : tabular-nums;
+    font-feature-settings: "tnum";
 }
 
 .log-entry {

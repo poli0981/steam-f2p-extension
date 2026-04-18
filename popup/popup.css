@@ -14,14 +14,19 @@ body {
     background : var(--bg-tertiary);
 }
 
-/* ── Header ── */
+/* ── Header — sticky translucent bar ── */
 .popup-header {
-    display         : flex;
-    align-items     : center;
-    justify-content : space-between;
-    padding         : var(--space-md) var(--space-lg);
-    background      : var(--bg-primary);
-    border-bottom   : 1px solid var(--border);
+    position                : sticky;
+    top                     : 0;
+    z-index                 : 10;
+    display                 : flex;
+    align-items             : center;
+    justify-content         : space-between;
+    padding                 : var(--space-md) var(--space-lg);
+    background              : var(--bg-primary-translucent);
+    backdrop-filter         : blur(12px) saturate(180%);
+    -webkit-backdrop-filter : blur(12px) saturate(180%);
+    border-bottom           : 1px solid var(--border);
 }
 
 .logo-icon {
@@ -125,7 +130,9 @@ body {
 }
 
 .queue-count {
-    font-size : var(--font-base);
+    font-size            : var(--font-base);
+    font-variant-numeric : tabular-nums;
+    font-feature-settings: "tnum";
 }
 
 .queue-bar {
@@ -208,8 +215,10 @@ body {
 }
 
 .activity-time {
-    font-size   : 10px;
-    color       : var(--text-muted);
-    flex-shrink : 0;
-    margin-top  : 1px;
+    font-size            : 10px;
+    color                : var(--text-muted);
+    flex-shrink          : 0;
+    margin-top           : 1px;
+    font-variant-numeric : tabular-nums;
+    font-feature-settings: "tnum";
 }

@@ -7,7 +7,51 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [1.6.1] - 2026-04-18
+## [1.7.0] - 2026-04-19
+
+### Added
+
+- **Bundled Inter Variable font** at `lib/fonts/InterVariable.woff2` (~344 KB). Loaded via `@font-face` in
+  `shared/theme.css` — no external CDN, MV3-safe. `font-display: swap` preserves instant-text-render with the
+  system-font fallback while the woff2 loads.
+- **Auto light theme** via `@media (prefers-color-scheme: light)`. A full token override inside `shared/theme.css`
+  adapts backgrounds, text, accents, borders and shadows for light-mode users. No in-app toggle yet (that ships in
+  v2.0.0 as part of the full refresh).
+- **`.tabular-nums` utility class** and `font-variant-numeric: tabular-nums` on counters — queue count, log
+  timestamps, activity times — so digits no longer shuffle width.
+- **Reduced-motion support** — `@media (prefers-reduced-motion: reduce)` disables transforms and animations.
+
+### Changed
+
+- **Palette refresh** in `shared/theme.css`:
+  - `--text-muted` `#5A6B7A` → `#7A8FA3` — now passes WCAG AA 4.5:1 on `--bg-card`. The old value was ~3.6:1.
+  - `--accent-red` `#E74C3C` → `#F87171` (Tailwind red-400), hovers and contrast token adjusted.
+  - `--accent-green` `#4FC978` → `#34D399` (emerald-400).
+  - `--accent-yellow` `#F39C12` → `#FBBF24` (amber-400).
+  - Kept Steam-blue `#66C0F4` as primary accent — the extension's identity colour.
+  - Introduced `--accent-contrast`, `--accent-green-contrast`, `--accent-red-contrast`, `--accent-yellow-contrast`
+    tokens so button and toast text colour flips correctly between dark and light modes.
+- **Typography stack** now leads with `"Inter Variable", "Inter", "Segoe UI Variable Text", "Segoe UI",
+  -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif`. Inter renders consistently across OSes
+  thanks to the local bundle; system variable fonts (Segoe UI Variable on Win11, SF Pro Text on macOS) are the
+  graceful fallback.
+- **Body** enables Inter stylistic sets (`cv11`, `ss01`) and grayscale antialiasing for sharper glyph edges.
+- **Layered box-shadow tokens** — `--shadow-sm/md/lg` are now dual-pass shadows for realistic depth. Harmonised
+  with separate values for light mode.
+- **`.card` and `.game-card`** now translate up 1–2 px on hover with an accompanying shadow, giving tactile
+  feedback without being distracting.
+- **Buttons** (`.btn-primary`, `.btn-success`, `.btn-danger`) have a 1 px hover lift and press-down on `:active`.
+- **Toasts** use `backdrop-filter: blur(14px) saturate(180%)` with a subtle 10 % border tint, and switched to the
+  per-theme contrast tokens. Toast-warning and toast-info no longer fail to contrast in light mode.
+- **Popup header** and **Queue / Settings page headers** are sticky with `backdrop-filter: blur(12px)
+  saturate(180%)` against translucent backgrounds — gives a modern "frosted glass" feel while scrolling.
+- **Scrollbar thumb** adapts in light mode.
+
+### Fixed
+
+- **WCAG AA regression** — `text-muted` was flagged at 3.6:1 on card backgrounds, below the 4.5:1 threshold for
+  body text. Now 5.0:1.
+
 
 ### Fixed
 
@@ -350,6 +394,9 @@ git push origin vX.Y.Z   # workflow does the rest
 
 ### Planned / proposed
 
+- **UI refresh Phase B (v2.0.0)** — themed modal replacing native `confirm()`, queue card redesign (single expandable
+  with tabs), skeleton loaders, in-app theme toggle (system / dark / light), toast stack with undo progress bar,
+  button press micro-interactions
 - Firefox (Manifest V3) support
 - Queue JSON export/import (backup / cross-browser migration)
 - GitHub health indicator in popup (surface recent rate-limit / auth errors)
@@ -369,4 +416,5 @@ git push origin vX.Y.Z   # workflow does the rest
 [1.5.1]: https://github.com/poli0981/steam-f2p-extension/compare/v1.5.0...v1.5.1
 [1.6.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.5.1...v1.6.0
 [1.6.1]: https://github.com/poli0981/steam-f2p-extension/compare/v1.6.0...v1.6.1
-[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.6.1...HEAD
+[1.7.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.6.1...v1.7.0
+[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.7.0...HEAD
