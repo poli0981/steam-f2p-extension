@@ -401,7 +401,15 @@
      *       <td class="checkcol"></td>                  ← no audio
      *       <td class="checkcol"></td>                  ← no subtitles
      *     </tr>
+     *     <tr class="unsupported">                      ← UNSUPPORTED row (skipped)
+     *       <td class="ellipsis">Arabic</td>
+     *       <td colspan="3">Not supported</td>
+     *     </tr>
      *   </table>
+     *
+     * Skipping rules:
+     *   - Row has class="unsupported" (Steam's explicit marker)
+     *   - Defensive: no checkmark in any of interface/audio/subtitles
      *
      * Returns: {
      *   list: ["English", "Japanese", "Simplified Chinese"],
@@ -420,6 +428,9 @@
         const details = [];
 
         for (const row of rows) {
+            // Skip rows Steam explicitly marks as unsupported
+            if (row.classList.contains("unsupported")) continue;
+
             const cells = row.querySelectorAll("td");
             if (cells.length < 2) continue; // skip header row
 
@@ -434,6 +445,10 @@
                 audio: hasCheck(cells[2]),
                 subtitles: hasCheck(cells[3]),
             };
+
+            // Defensive: skip rows with no support signal at all
+            // (catches edge cases where Steam omits the "unsupported" class)
+            if (!entry.interface && !entry.audio && !entry.subtitles) continue;
 
             list.push(langName);
             details.push(entry);
