@@ -164,95 +164,73 @@ function createCard(game) {
 
     body.append(nameEl, meta);
 
-    // ── Auto-detected info (collapsible, read-only) ──
-    const autoToggle = document.createElement("button");
-    autoToggle.className = "game-card-toggle auto-toggle";
-    autoToggle.textContent = "▾ Game Info (auto-detected)";
-    autoToggle.addEventListener("click", () => {
-        const panel = card.querySelector(".game-card-auto");
-        const isOpen = panel.classList.toggle("open");
-        autoToggle.textContent = isOpen
-                                 ? "▴ Hide Game Info"
-                                 : "▾ Game Info (auto-detected)";
-    });
+    // ── Info panel content (read-only auto-detected fields) ──
+    const infoPanel = document.createElement("div");
+    infoPanel.className  = "card-panel card-panel-info";
+    infoPanel.id         = `panel-info-${appid}`;
+    infoPanel.setAttribute("role", "tabpanel");
+    infoPanel.setAttribute("aria-labelledby", `tab-info-${appid}`);
 
-    const autoPanel = document.createElement("div");
-    autoPanel.className = "game-card-auto";
-
-    // Description
     if (game.description) {
-        autoPanel.appendChild(makeAutoRow("Description", truncate(game.description, 200), game.description));
+        infoPanel.appendChild(makeAutoRow("Description", truncate(game.description, 200), game.description));
     }
-
-    // Release date
     if (game.release_date) {
-        autoPanel.appendChild(makeAutoRow("Release Date", game.release_date));
+        infoPanel.appendChild(makeAutoRow("Release Date", game.release_date));
     }
-
-    // Developer & Publisher (arrays)
     if (devStr) {
-        autoPanel.appendChild(makeAutoRow("Developer", devStr));
+        infoPanel.appendChild(makeAutoRow("Developer", devStr));
     }
     const pubStr = Array.isArray(game.publisher)
                    ? game.publisher.join(", ")
                    : (game.publisher || "");
     if (pubStr && pubStr !== devStr) {
-        autoPanel.appendChild(makeAutoRow("Publisher", pubStr));
+        infoPanel.appendChild(makeAutoRow("Publisher", pubStr));
     }
-
-    // Platforms
     if (game.platforms && game.platforms.length > 0) {
-        autoPanel.appendChild(makeAutoRow("Platforms", game.platforms.join(", ")));
+        infoPanel.appendChild(makeAutoRow("Platforms", game.platforms.join(", ")));
     }
-
-    // Languages
     if (game.languages && game.languages.length > 0) {
         const langText = game.languages.length <= 5
                          ? game.languages.join(", ")
                          : `${game.languages.slice(0, 5).join(", ")} +${game.languages.length - 5} more`;
-        autoPanel.appendChild(makeAutoRow("Languages", langText,
-                                          game.languages.join(", ")));
+        infoPanel.appendChild(makeAutoRow("Languages", langText, game.languages.join(", ")));
     }
-
-    // Tags
     if (game.tags && game.tags.length > 0) {
-        const tagRow = document.createElement("div");
+        const tagRow   = document.createElement("div");
         tagRow.className = "auto-row";
-
         const tagLabel = document.createElement("span");
-        tagLabel.className = "auto-label";
+        tagLabel.className  = "auto-label";
         tagLabel.textContent = "Tags";
-
-        const tagList = document.createElement("div");
+        const tagList  = document.createElement("div");
         tagList.className = "auto-tags";
         for (const t of game.tags) {
             const chip = document.createElement("span");
-            chip.className = "tag-chip";
+            chip.className   = "tag-chip";
             chip.textContent = t;
             tagList.appendChild(chip);
         }
-
         tagRow.append(tagLabel, tagList);
-        autoPanel.appendChild(tagRow);
+        infoPanel.appendChild(tagRow);
     }
 
-    // ── Editable fields (collapsible) ──
-    const editToggle = document.createElement("button");
-    editToggle.className = "game-card-toggle edit-toggle";
-    editToggle.textContent = "▾ Edit fields";
-    editToggle.addEventListener("click", () => {
-        const panel = card.querySelector(".game-card-fields");
-        const isOpen = panel.classList.toggle("open");
-        editToggle.textContent = isOpen ? "▴ Hide fields" : "▾ Edit fields";
-    });
+    // Graceful empty state when a DLC/demo card has no auto-detected info
+    if (infoPanel.childElementCount === 0) {
+        const empty = document.createElement("div");
+        empty.className     = "card-panel-empty";
+        empty.textContent   = "No auto-detected info available for this entry.";
+        infoPanel.appendChild(empty);
+    }
 
-    const fieldsPanel = document.createElement("div");
-    fieldsPanel.className = "game-card-fields";
+    // ── Edit panel content (user-editable fields) ──
+    const editPanel = document.createElement("div");
+    editPanel.className = "card-panel card-panel-edit";
+    editPanel.id        = `panel-edit-${appid}`;
+    editPanel.setAttribute("role", "tabpanel");
+    editPanel.setAttribute("aria-labelledby", `tab-edit-${appid}`);
+    editPanel.hidden    = true;  // info is the default visible tab
 
-    // Genre: tag-select dropdown
-    fieldsPanel.appendChild(createGenreField(game, appid));
+    editPanel.appendChild(createGenreField(game, appid));
 
-    // Other editable fields
     for (const [key, def] of Object.entries(EDITABLE_FIELDS)) {
         if (key === "genre") continue; // handled above
 
@@ -260,7 +238,7 @@ function createCard(game) {
         row.className = "field-row";
 
         const label = document.createElement("span");
-        label.className = "field-label";
+        label.className   = "field-label";
         label.textContent = def.label;
 
         const inputWrap = document.createElement("div");
@@ -272,17 +250,17 @@ function createCard(game) {
             input.className = "select";
             for (const opt of def.options) {
                 const option = document.createElement("option");
-                option.value = opt;
+                option.value       = opt;
                 option.textContent = opt;
                 if (game[key] === opt) option.selected = true;
                 input.appendChild(option);
             }
         } else {
             input = document.createElement("input");
-            input.type = "text";
-            input.className = "input";
+            input.type        = "text";
+            input.className   = "input";
             input.placeholder = def.placeholder || "";
-            input.value = game[key] || "";
+            input.value       = game[key] || "";
         }
 
         input.dataset.field = key;
@@ -290,10 +268,94 @@ function createCard(game) {
 
         inputWrap.appendChild(input);
         row.append(label, inputWrap);
-        fieldsPanel.appendChild(row);
+        editPanel.appendChild(row);
     }
 
-    card.append(header, body, autoToggle, autoPanel, editToggle, fieldsPanel);
+    // ── Tab bar ──
+    const tablist = document.createElement("div");
+    tablist.className = "card-tabs";
+    tablist.setAttribute("role", "tablist");
+    tablist.setAttribute("aria-label", "Card sections");
+
+    const infoTab = document.createElement("button");
+    infoTab.type      = "button";
+    infoTab.className = "card-tab card-tab-active";
+    infoTab.id        = `tab-info-${appid}`;
+    infoTab.textContent = "Info";
+    infoTab.setAttribute("role", "tab");
+    infoTab.setAttribute("aria-selected", "true");
+    infoTab.setAttribute("aria-controls", `panel-info-${appid}`);
+    infoTab.tabIndex = 0;
+
+    const editTab = document.createElement("button");
+    editTab.type      = "button";
+    editTab.className = "card-tab";
+    editTab.id        = `tab-edit-${appid}`;
+    editTab.textContent = "Edit";
+    editTab.setAttribute("role", "tab");
+    editTab.setAttribute("aria-selected", "false");
+    editTab.setAttribute("aria-controls", `panel-edit-${appid}`);
+    editTab.tabIndex = -1;
+
+    const activateTab = (target) => {
+        const isInfo = target === infoTab;
+        infoTab.classList.toggle("card-tab-active", isInfo);
+        editTab.classList.toggle("card-tab-active", !isInfo);
+        infoTab.setAttribute("aria-selected", String(isInfo));
+        editTab.setAttribute("aria-selected", String(!isInfo));
+        infoTab.tabIndex  = isInfo ? 0 : -1;
+        editTab.tabIndex  = isInfo ? -1 : 0;
+        infoPanel.hidden  = !isInfo;
+        editPanel.hidden  = isInfo;
+        target.focus({ preventScroll: true });
+    };
+
+    infoTab.addEventListener("click", () => activateTab(infoTab));
+    editTab.addEventListener("click", () => activateTab(editTab));
+
+    // Arrow-key navigation — standard ARIA tablist pattern
+    tablist.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+            e.preventDefault();
+            const next = document.activeElement === infoTab ? editTab : infoTab;
+            activateTab(next);
+        } else if (e.key === "Home") {
+            e.preventDefault();
+            activateTab(infoTab);
+        } else if (e.key === "End") {
+            e.preventDefault();
+            activateTab(editTab);
+        }
+    });
+
+    tablist.append(infoTab, editTab);
+
+    // ── Single collapsible details section containing tabs + panels ──
+    const details = document.createElement("div");
+    details.className = "game-card-details";
+    details.hidden    = true;
+    details.append(tablist, infoPanel, editPanel);
+
+    const toggle = document.createElement("button");
+    toggle.type      = "button";
+    toggle.className = "game-card-toggle";
+    toggle.setAttribute("aria-expanded", "false");
+    toggle.setAttribute("aria-controls", `details-${appid}`);
+    details.id = `details-${appid}`;
+
+    const renderToggle = (isOpen) => {
+        toggle.textContent = isOpen ? "▴ Hide details" : "▾ Details";
+        toggle.setAttribute("aria-expanded", String(isOpen));
+    };
+    renderToggle(false);
+
+    toggle.addEventListener("click", () => {
+        const nowOpen = details.hidden;
+        details.hidden = !nowOpen;
+        renderToggle(nowOpen);
+    });
+
+    card.append(header, body, toggle, details);
     return card;
 }
 
