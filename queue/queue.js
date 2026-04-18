@@ -12,7 +12,7 @@
 
 import { MSG, EDITABLE_FIELDS, AUTO_FIELDS, GENRE_PRESETS, STORAGE_KEYS } from "../shared/constants.js";
 import { debounce, extractAppId, formatTime, truncate } from "../shared/utils.js";
-import { $, sendMessage, showToast } from "../shared/ui-helpers.js";
+import { $, sendMessage, showToast, showUndoToast } from "../shared/ui-helpers.js";
 
 // ── DOM refs ──
 const queueCountEl = $("#queueCount");
@@ -21,9 +21,14 @@ const emptyState = $("#emptyState");
 const searchInput = $("#searchInput");
 const refreshBtn = $("#refreshBtn");
 const pushAllBtn = $("#pushAllBtn");
+const pushSelectedBtn = $("#pushSelectedBtn");
+const pushSelectedLabel = $("#pushSelectedLabel");
 const clearAllBtn = $("#clearAllBtn");
 
 let currentQueue = [];
+// Selected appids for "Push Selected". Persists across re-renders; pruned
+// to match currentQueue after every render so stale ids don't leak.
+const selectedAppids = new Set();
 
 // ── Render ──
 
@@ -32,6 +37,14 @@ function renderQueue(queue, filter = "") {
     queueCountEl.textContent = queue.length;
     pushAllBtn.disabled = queue.length === 0;
     clearAllBtn.disabled = queue.length === 0;
+
+    // Prune selection Set to only appids that still exist in the queue —
+    // entries may have been pushed or removed via another tab.
+    const liveAppids = new Set(queue.map((g) => extractAppId(g.link)).filter(Boolean));
+    for (const id of [...selectedAppids]) {
+        if (!liveAppids.has(id)) selectedAppids.delete(id);
+    }
+    updatePushSelectedBtn();
 
     let filtered = queue;
     if (filter) {
@@ -81,6 +94,7 @@ function createCard(game) {
     const card = document.createElement("div");
     card.className = "game-card";
     card.dataset.appid = appid;
+    if (selectedAppids.has(appid)) card.classList.add("is-selected");
 
     // ── Header with thumbnail ──
     const header = document.createElement("div");
@@ -93,13 +107,32 @@ function createCard(game) {
     thumb.loading = "lazy";
     thumb.onerror = () => { thumb.src = ""; };
 
+    // Selection checkbox (top-left). Stops event propagation so it doesn't
+    // interfere with any future whole-card click handlers.
+    const selectBox = document.createElement("input");
+    selectBox.type = "checkbox";
+    selectBox.className = "game-card-select";
+    selectBox.title = "Include in 'Push Selected'";
+    selectBox.checked = selectedAppids.has(appid);
+    selectBox.addEventListener("click", (e) => e.stopPropagation());
+    selectBox.addEventListener("change", () => {
+        if (selectBox.checked) {
+            selectedAppids.add(appid);
+            card.classList.add("is-selected");
+        } else {
+            selectedAppids.delete(appid);
+            card.classList.remove("is-selected");
+        }
+        updatePushSelectedBtn();
+    });
+
     const removeBtn = document.createElement("button");
     removeBtn.className = "game-card-remove";
     removeBtn.title = "Remove from queue";
     removeBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
-    removeBtn.addEventListener("click", () => handleRemove(appid, game.name));
+    removeBtn.addEventListener("click", () => handleRemove(game));
 
-    header.append(thumb, removeBtn);
+    header.append(thumb, selectBox, removeBtn);
 
     // ── Body: name + quick meta badges ──
     const body = document.createElement("div");
@@ -402,14 +435,45 @@ function makeMetaTag(text, cls) {
 
 // ── Handlers ──
 
-async function handleRemove(appid, name) {
+function updatePushSelectedBtn() {
+    const n = selectedAppids.size;
+    pushSelectedBtn.disabled = n === 0;
+    pushSelectedLabel.textContent = n > 0 ? `Push Selected (${n})` : "Push Selected";
+}
+
+/**
+ * Remove a game and offer an Undo toast that restores the exact entry
+ * (preserving added_at, notes, etc.) via MSG.RESTORE_ENTRY.
+ *
+ * Accepts the full game object so the entry can be sent back verbatim.
+ */
+async function handleRemove(game) {
+    const appid = extractAppId(game.link);
+    if (!appid) return;
+
+    // Keep a deep-enough copy in case the user undoes after further edits
+    // elsewhere. JSONL entries are plain data, structuredClone handles them.
+    const snapshot = structuredClone(game);
+
     const resp = await sendMessage(MSG.REMOVE_FROM_QUEUE, { appid });
-    if (resp?.ok) {
-        showToast(`Removed: ${name || appid}`, "info");
-        await loadQueue();
-    } else {
+    if (!resp?.ok) {
         showToast(resp?.error || "Failed to remove", "error");
+        return;
     }
+
+    // Selection cleanup — the entry is gone from storage
+    selectedAppids.delete(appid);
+    await loadQueue();
+
+    showUndoToast(`Removed: ${game.name || appid}`, async () => {
+        const restoreResp = await sendMessage(MSG.RESTORE_ENTRY, { entry: snapshot });
+        if (restoreResp?.ok) {
+            showToast("Restored", "success");
+            await loadQueue();
+        } else {
+            showToast(restoreResp?.error || "Undo failed", "error");
+        }
+    });
 }
 
 async function handleFieldUpdate(appid, field, value) {
@@ -443,28 +507,36 @@ refreshBtn.addEventListener("click", async () => {
     showToast("Queue refreshed", "info");
 });
 
-pushAllBtn.addEventListener("click", async () => {
-    if (currentQueue.length === 0) return;
+/**
+ * Shared push flow with GPG fallback. Called by both pushAllBtn and
+ * pushSelectedBtn.
+ *
+ * @param {object} opts
+ * @param {string[]} [opts.appids] - Specific appids to push, or undefined for all
+ * @param {HTMLButtonElement} opts.btn - Button to spinner/disable
+ * @param {string} opts.originalHTML - Original innerHTML to restore on done
+ * @param {() => void} [opts.onSuccess] - Extra work after a successful push
+ */
+async function runPush({ appids, btn, originalHTML, onSuccess }) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner"></span> Pushing...`;
 
-    const count = currentQueue.length;
-    if (!confirm(`Push ${count} game(s) to GitHub?\nEntries will be staged for ingest into the tracker.`)) return;
-
-    pushAllBtn.disabled = true;
-    pushAllBtn.innerHTML = `<span class="spinner"></span> Pushing...`;
-
-    const resp = await sendMessage(MSG.PUSH_QUEUE);
+    const payload = appids ? { appids } : undefined;
+    const resp = await sendMessage(MSG.PUSH_QUEUE, payload);
 
     if (resp?.ok) {
         const label = resp.signed ? " (GPG signed)" : "";
         showToast(`Pushed ${resp.pushed} game(s)${label}`, "success");
+        if (onSuccess) onSuccess();
         await loadQueue();
     } else if (resp?.gpgFailed) {
         const fallback = confirm(`GPG signing failed: ${resp.error}\n\nPush unsigned instead?`);
         if (fallback) {
-            pushAllBtn.innerHTML = `<span class="spinner"></span> Unsigned...`;
-            const unsignedResp = await sendMessage(MSG.PUSH_QUEUE_UNSIGNED);
+            btn.innerHTML = `<span class="spinner"></span> Unsigned...`;
+            const unsignedResp = await sendMessage(MSG.PUSH_QUEUE_UNSIGNED, payload);
             if (unsignedResp?.ok) {
                 showToast(`Pushed ${unsignedResp.pushed} game(s) (unsigned)`, "success");
+                if (onSuccess) onSuccess();
                 await loadQueue();
             } else {
                 showToast(unsignedResp?.error || "Unsigned push failed", "error");
@@ -474,26 +546,81 @@ pushAllBtn.addEventListener("click", async () => {
         showToast(resp?.error || "Push failed", "error");
     }
 
-    pushAllBtn.disabled = false;
-    pushAllBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg> Push All`;
+    btn.disabled = false;
+    btn.innerHTML = originalHTML;
+}
+
+pushAllBtn.addEventListener("click", async () => {
+    if (currentQueue.length === 0) return;
+
+    const count = currentQueue.length;
+    if (!confirm(`Push ${count} game(s) to GitHub?\nEntries will be staged for ingest into the tracker.`)) return;
+
+    await runPush({
+        appids: undefined,
+        btn: pushAllBtn,
+        originalHTML: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg> Push All`,
+    });
+});
+
+pushSelectedBtn.addEventListener("click", async () => {
+    if (selectedAppids.size === 0) return;
+
+    const count = selectedAppids.size;
+    if (!confirm(`Push ${count} selected game(s) to GitHub?\nEntries will be staged for ingest into the tracker.`)) return;
+
+    const appids = [...selectedAppids];
+    const originalHTML = pushSelectedBtn.innerHTML;
+
+    await runPush({
+        appids,
+        btn: pushSelectedBtn,
+        originalHTML,
+        onSuccess: () => {
+            // The pushed entries are now gone from the queue; prune matching
+            // selections. renderQueue() will also re-prune, this just keeps
+            // state accurate between push and re-render.
+            for (const id of appids) selectedAppids.delete(id);
+            updatePushSelectedBtn();
+        },
+    });
 });
 
 clearAllBtn.addEventListener("click", async () => {
     if (currentQueue.length === 0) return;
-    if (!confirm(`Remove all ${currentQueue.length} game(s) from queue?\nThis cannot be undone.`)) return;
+    if (!confirm(`Remove all ${currentQueue.length} game(s) from queue?\nYou will have a few seconds to Undo.`)) return;
 
     clearAllBtn.disabled = true;
     clearAllBtn.textContent = "Clearing...";
 
-    for (const game of currentQueue) {
+    // Snapshot the current queue so Undo can restore the whole batch with
+    // original timestamps and user edits intact.
+    const snapshot = structuredClone(currentQueue);
+    const cleared = snapshot.length;
+
+    for (const game of snapshot) {
         const appid = extractAppId(game.link);
         if (appid) {
             await sendMessage(MSG.REMOVE_FROM_QUEUE, { appid });
         }
     }
 
-    showToast(`Cleared ${currentQueue.length} game(s) from queue`, "info");
+    selectedAppids.clear();
     await loadQueue();
+
+    showUndoToast(`Cleared ${cleared} game(s)`, async () => {
+        const restoreResp = await sendMessage(MSG.RESTORE_ENTRY, { entries: snapshot });
+        if (restoreResp?.ok) {
+            const skipped = restoreResp.skipped || 0;
+            const msg = skipped > 0
+                ? `Restored ${restoreResp.restored}, skipped ${skipped}`
+                : `Restored ${restoreResp.restored} game(s)`;
+            showToast(msg, "success");
+            await loadQueue();
+        } else {
+            showToast(restoreResp?.error || "Undo failed", "error");
+        }
+    }, { duration: 8000 });
 
     clearAllBtn.disabled = false;
     clearAllBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Clear`;

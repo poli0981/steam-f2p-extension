@@ -34,6 +34,16 @@
     const cache = {};
 
     /**
+     * Reset every cached selector result.
+     * Called before a re-scan (e.g. Scan Page button in popup) so that
+     * late-loading DOM content (language table arriving after document_idle,
+     * Steam SPA swap, etc.) gets picked up.
+     */
+    ns.clearDomCache = function () {
+        for (const key of Object.keys(cache)) delete cache[key];
+    };
+
+    /**
      * All .app_tag elements inside the popular-tags glance section.
      * Used by: extract-type, extract-platform, extract-lang-tags, extract-price fallback.
      */

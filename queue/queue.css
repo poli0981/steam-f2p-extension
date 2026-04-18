@@ -140,6 +140,30 @@ body {
     color      : #fff;
 }
 
+/* Selection checkbox (top-left on card header) */
+.game-card-select {
+    position      : absolute;
+    top           : var(--space-xs);
+    left          : var(--space-xs);
+    width         : 20px;
+    height        : 20px;
+    cursor        : pointer;
+    accent-color  : var(--accent);
+    opacity       : 0.75;
+    transition    : opacity 0.15s ease;
+    z-index       : 2;
+}
+
+.game-card:hover .game-card-select,
+.game-card-select:checked {
+    opacity : 1;
+}
+
+.game-card.is-selected {
+    outline        : 2px solid var(--accent);
+    outline-offset : -2px;
+}
+
 /* ── Card body ── */
 .game-card-body {
     padding : var(--space-md);

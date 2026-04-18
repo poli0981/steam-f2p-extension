@@ -23,6 +23,7 @@ const detectedGenre = $("#detectedGenre");
 const detectedDev = $("#detectedDev");
 const detectedBadges = $("#detectedBadges");
 const addBtn = $("#addBtn");
+const scanBtn = $("#scanBtn");
 const queueCount = $("#queueCount");
 const queueBar = $("#queueBar");
 const pushBtn = $("#pushBtn");
@@ -342,6 +343,40 @@ function bindEvents() {
             addBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add to Queue`;
             showToast(addResp?.error || "Failed to add", "error");
         }
+    });
+
+    scanBtn?.addEventListener("click", async () => {
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (!tab || !tab.url || !tab.url.includes("store.steampowered.com/app/")) {
+            showToast("Not on a Steam game page", "warning");
+            return;
+        }
+
+        const origHTML = scanBtn.innerHTML;
+        scanBtn.disabled = true;
+        scanBtn.innerHTML = `<span class="spinner"></span> Scanning...`;
+
+        // Ask the content script to re-run detection with a fresh DOM cache.
+        let rescanOk = false;
+        try {
+            const resp = await chrome.tabs.sendMessage(tab.id, { type: MSG.RESCAN_PAGE });
+            rescanOk = !!(resp && resp.ok);
+        } catch (err) {
+            // Content script may not be loaded (e.g. page loaded before
+            // install, blocked by an extension error). Surface it cleanly.
+            showToast("Rescan failed — try reloading the Steam tab", "error");
+        }
+
+        if (rescanOk) {
+            // Give the content script a tick to push the fresh GAME_DETECTED
+            // into the service worker's detectedGames Map before we refetch.
+            await new Promise((r) => setTimeout(r, 250));
+            await loadDetectedGame();
+            showToast("Page rescanned", "success");
+        }
+
+        scanBtn.disabled = false;
+        scanBtn.innerHTML = origHTML;
     });
 
     pushBtn.addEventListener("click", async () => {

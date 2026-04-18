@@ -52,8 +52,10 @@ validates, and catalogs the games automatically via GitHub Actions.
 - **Auto field protection**: 12 auto-detected fields locked from user edits
 - Editable fields: type, anti-cheat, genre, notes, safety rating
 - Search and filter within queue (searches name, genre, developer, publisher, tags)
+- **Push Selected** — check any subset of cards and push only those; full queue push also available
+- **Undo** transient toast after *Remove* / *Clear All* — restores the entry verbatim (original `added_at`, notes, edited fields preserved)
 - Card grid UI with thumbnail previews
-- Clear All with confirmation
+- Clear All with Undo window
 
 ### GitHub Integration
 
@@ -133,6 +135,7 @@ The toolbar popup shows:
 - **Detected game** card with thumbnail, name, genre, developer, platforms, language count, description preview
 - **Classification badges**: Free to Play / Free Game / Paid / Demo / Playtest / Online / Anti-cheat (with kernel
   warning)
+- **Scan button** — re-scrape the current page without reloading it (picks up late-loading DOM like the language table)
 - **Duplicate status** — "already in tracker" or "already in queue"
 - **Queue summary** — count and progress bar
 - **Quick actions** — Push, Open Queue, Open Settings
