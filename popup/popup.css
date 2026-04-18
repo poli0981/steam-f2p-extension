@@ -117,11 +117,16 @@ body {
     flex-wrap  : wrap;
 }
 
-.detected-loading,
 .detected-none,
 .detected-duplicate {
     text-align : center;
     padding    : var(--space-sm) 0;
+}
+
+/* Loading state now hosts a skeleton preview — keep original padding
+   cadence but no forced text-centering (the skeleton layout is a row). */
+.detected-loading {
+    padding : var(--space-sm) 0;
 }
 
 /* ── Queue Summary ── */

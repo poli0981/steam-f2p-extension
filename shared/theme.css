@@ -559,6 +559,54 @@ a:hover {
 }
 
 /* ══════════════════════════════════════════════════════════════
+   Skeleton loaders — shimmering placeholders used while data is
+   being fetched (popup "Checking page…" and initial queue render).
+   Pure CSS, no JS animation. Respects prefers-reduced-motion.
+   ══════════════════════════════════════════════════════════════ */
+
+.skeleton {
+    --skeleton-base : var(--bg-card);
+    --skeleton-peak : var(--bg-hover);
+
+    background       : linear-gradient(
+        90deg,
+        var(--skeleton-base) 0%,
+        var(--skeleton-peak) 50%,
+        var(--skeleton-base) 100%
+    );
+    background-size  : 200% 100%;
+    animation        : skeleton-pulse 1.5s ease-in-out infinite;
+    border-radius    : var(--radius-sm);
+    pointer-events   : none;
+    user-select      : none;
+}
+
+.skeleton-line {
+    height : 10px;
+}
+
+@keyframes skeleton-pulse {
+    0%   { background-position : 200% 0; }
+    100% { background-position : -200% 0; }
+}
+
+/* Light-theme skeleton — use lighter surface tones for the shimmer */
+@media (prefers-color-scheme: light) {
+    .skeleton {
+        --skeleton-base : #E5ECF3;
+        --skeleton-peak : #F2F6FA;
+    }
+}
+
+/* Reduced motion — hold the lighter peak colour, no animation */
+@media (prefers-reduced-motion: reduce) {
+    .skeleton {
+        animation  : none;
+        background : var(--skeleton-peak, var(--bg-hover));
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════
    Modal (themed confirm dialog) — see shared/modal.js
    Full-viewport backdrop with blur; centered card with spring
    entry and gentle exit.

@@ -33,8 +33,20 @@
 <section class = "popup-section" id = "detectedSection">
     <div class = "section-label">Current Page</div>
     <div class = "card detected-card" id = "detectedCard">
-        <div class = "detected-loading" id = "detectedLoading">
-            <span class = "text-muted text-sm">Checking page...</span>
+        <div class = "detected-loading" id = "detectedLoading" aria-busy = "true" aria-live = "polite">
+            <div class = "detected-row">
+                <div class = "skeleton detected-thumb"></div>
+                <div class = "detected-info">
+                    <div class = "skeleton skeleton-line" style = "width:70%; height:12px; margin-bottom:6px;"></div>
+                    <div class = "skeleton skeleton-line" style = "width:40%; height:9px;"></div>
+                    <div class = "detected-badges" style = "margin-top:8px;">
+                        <div class = "skeleton" style = "width:58px; height:16px; border-radius:10px;"></div>
+                        <div class = "skeleton" style = "width:42px; height:16px; border-radius:10px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class = "skeleton" style = "width:100%; height:28px; border-radius:var(--radius); margin-top:8px;"></div>
+            <span class = "sr-only">Checking page…</span>
         </div>
         <div class = "detected-content" id = "detectedContent" style = "display:none">
             <div class = "detected-row">
