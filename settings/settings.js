@@ -8,7 +8,7 @@
  * log viewer, export, clear, reset extension.
  */
 
-import {DEFAULT_SETTINGS, MSG} from "../shared/constants.js";
+import {DEFAULT_SETTINGS, MSG, STORAGE_KEYS} from "../shared/constants.js";
 import {formatTime} from "../shared/utils.js";
 import {$, sendMessage, showToast} from "../shared/ui-helpers.js";
 
@@ -462,5 +462,29 @@ async function init () {
                 }, i * 80);
             });
 }
+
+// ── Auto-refresh when settings / GPG key change elsewhere ──
+// Skip refresh if the user is actively editing a field — we don't want to
+// clobber their half-typed input with stale storage values.
+
+function isUserEditing () {
+    const el = document.activeElement;
+    if (!el) return false;
+    const tag = el.tagName;
+    if (tag !== "INPUT" && tag !== "SELECT" && tag !== "TEXTAREA") return false;
+    // Only guard form fields belonging to the settings form; log filters etc.
+    // don't need protection.
+    return FIELD_IDS.includes (el.id) || el.id === "gpg_private_key" || el.id === "gpg_passphrase";
+}
+
+chrome.storage.onChanged.addListener ((changes, area) => {
+    if (area !== "local") return;
+    if (changes[STORAGE_KEYS.SETTINGS] && !isUserEditing ()) {
+        loadSettingsIntoForm ();
+    }
+    if (changes[STORAGE_KEYS.GPG_KEY_META]) {
+        loadGPGKeyInfo ();
+    }
+});
 
 document.addEventListener ("DOMContentLoaded", init);

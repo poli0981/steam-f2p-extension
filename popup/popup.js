@@ -6,9 +6,10 @@
  * Popup logic – Phase 4 polished + new auto fields display.
  */
 
-import { MSG, QUEUE_MAX } from "../shared/constants.js";
+import { MSG, QUEUE_MAX, STORAGE_KEYS } from "../shared/constants.js";
 import { truncate } from "../shared/utils.js";
 import { $, sendMessage, showToast } from "../shared/ui-helpers.js";
+import { openExtensionPage } from "../shared/tab-manager.js";
 
 const versionEl = $("#version");
 const statusDot = $("#statusDot");
@@ -76,7 +77,7 @@ async function checkFirstRun(settings) {
     </button>`;
     section.insertBefore(banner, section.firstChild.nextSibling);
     banner.querySelector("#firstRunSetupBtn").addEventListener("click", () => {
-        chrome.tabs.create({ url: chrome.runtime.getURL("settings/settings.html") });
+        openExtensionPage("settings/settings.html");
         window.close();
     });
 }
@@ -273,6 +274,16 @@ function updateQueueUI(size) {
     pushBtn.disabled = size === 0;
 }
 
+// ── Live queue-count sync ──
+// If the popup happens to be open when the queue changes elsewhere
+// (service worker badge update, queue page remove, auto-push), keep the
+// count/bar in sync without requiring a reopen.
+chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== "local" || !changes[STORAGE_KEYS.QUEUE]) return;
+    const next = changes[STORAGE_KEYS.QUEUE].newValue;
+    updateQueueUI(Array.isArray(next) ? next.length : 0);
+});
+
 async function loadActivity() {
     const resp = await sendMessage(MSG.GET_LOGS);
     if (!resp?.ok || !resp.data?.length) return;
@@ -368,12 +379,12 @@ function bindEvents() {
     });
 
     openQueueBtn.addEventListener("click", () => {
-        chrome.tabs.create({ url: chrome.runtime.getURL("queue/queue.html") });
+        openExtensionPage("queue/queue.html");
         window.close();
     });
 
     openSettingsBtn.addEventListener("click", () => {
-        chrome.tabs.create({ url: chrome.runtime.getURL("settings/settings.html") });
+        openExtensionPage("settings/settings.html");
         window.close();
     });
 }

@@ -10,8 +10,8 @@
  *   - Search, remove, push
  */
 
-import { MSG, EDITABLE_FIELDS, AUTO_FIELDS, GENRE_PRESETS } from "../shared/constants.js";
-import { extractAppId, formatTime, truncate } from "../shared/utils.js";
+import { MSG, EDITABLE_FIELDS, AUTO_FIELDS, GENRE_PRESETS, STORAGE_KEYS } from "../shared/constants.js";
+import { debounce, extractAppId, formatTime, truncate } from "../shared/utils.js";
 import { $, sendMessage, showToast } from "../shared/ui-helpers.js";
 
 // ── DOM refs ──
@@ -510,6 +510,18 @@ document.addEventListener("keydown", (e) => {
         searchInput.value = "";
         renderQueue(currentQueue, "");
         searchInput.blur();
+    }
+});
+
+// ── Auto-refresh when queue storage changes elsewhere ──
+// Fires when the popup adds a game, the service worker removes one, or an
+// auto-push drains entries. Debounced so bursts of updates coalesce into a
+// single re-render.
+const refreshFromStorage = debounce(() => loadQueue(), 150);
+
+chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === "local" && changes[STORAGE_KEYS.QUEUE]) {
+        refreshFromStorage();
     }
 });
 
