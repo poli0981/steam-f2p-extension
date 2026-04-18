@@ -7,6 +7,37 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.12.0] - 2026-04-19
+
+### Added
+
+- **Toast stacking** — multiple toasts can now be visible simultaneously. Removing a game while an undo toast
+  from a previous remove is still counting down no longer wipes the first toast. Cap is 5 stacked toasts;
+  additional toasts evict the oldest FIFO.
+- **Undo progress bar** — `showUndoToast` renders a thin shrinking bar at the bottom of the toast that
+  visualises the countdown. Pure-CSS `@keyframes toast-progress linear forwards` driven by a per-toast
+  `--toast-duration` custom property. Hidden under `@media (prefers-reduced-motion: reduce)` (the dismiss
+  timer still fires on schedule).
+
+### Changed
+
+- **Toast container** — new `.toast-container` fixed element (lazily created, `aria-live="polite"`,
+  `role="status"`). Individual toasts are now `position: relative` inside the container instead of each
+  being `position: fixed` at the same bottom/right — previously only one could exist before overlapping.
+- Container has `pointer-events: none` so clicks fall through to the page; toasts opt back in with
+  `pointer-events: auto`, so only the toasts (and the Undo button) capture input.
+- `showToast()` accepts an optional `{duration}` opt for callers that need something other than the 2.5 s
+  default.
+
+### Phase B complete 🎉
+
+All five Phase B tasks shipped (themed modal · queue card tabs · skeleton loaders · in-app theme toggle ·
+toast stack with undo progress). The UI refresh roadmap (Option A in v1.7.0, then Option B tasks 1–5) is
+done. The next natural milestone is the **v2.0.0 ribbon-cutting release**, which can fold in final polish
+and mark the relaunch.
+
+---
+
 ## [1.11.0] - 2026-04-19
 
 ### Added
@@ -523,9 +554,8 @@ git push origin vX.Y.Z   # workflow does the rest
 
 ### Planned / proposed
 
-- **UI refresh Phase B (targeting v2.0.0)** — remaining items: toast stack with undo progress bar. (Themed
-  modal shipped in v1.8.0; queue card redesign with tabs shipped in v1.9.0; skeleton loaders shipped in
-  v1.10.0; in-app theme toggle shipped in v1.11.0.)
+- **v2.0.0 ribbon-cutting release** — Option A + Phase B tasks 1-5 all shipped (v1.7.0 - v1.12.0). v2.0.0
+  will be the relaunch marker, potentially folding in final polish items from the backlog below.
 - Firefox (Manifest V3) support
 - Queue JSON export/import (backup / cross-browser migration)
 - GitHub health indicator in popup (surface recent rate-limit / auth errors)
@@ -550,4 +580,5 @@ git push origin vX.Y.Z   # workflow does the rest
 [1.9.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.8.0...v1.9.0
 [1.10.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.9.0...v1.10.0
 [1.11.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.10.0...v1.11.0
-[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.11.0...HEAD
+[1.12.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.11.0...v1.12.0
+[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.12.0...HEAD
