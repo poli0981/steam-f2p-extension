@@ -11,6 +11,10 @@
 import {DEFAULT_SETTINGS, MSG, STORAGE_KEYS} from "../shared/constants.js";
 import {formatTime} from "../shared/utils.js";
 import {$, sendMessage, showToast} from "../shared/ui-helpers.js";
+import {applyTheme, initThemeSync} from "../shared/theme-applier.js";
+
+// Apply persisted ui_theme as early as possible
+initThemeSync();
 
 // Settings fields (id must match settings key)
 const FIELD_IDS = [
@@ -49,8 +53,26 @@ async function loadSettingsIntoForm () {
     const gpgFields = $ ("#gpgFields");
     gpgFields.style.display = $ ("#gpg_enabled").checked ? "flex" : "none";
 
+    // Reflect current theme choice on the segmented control
+    const theme = settings.ui_theme || "system";
+    updateThemeSegments (theme);
+
     // Load GPG key info if exists
     await loadGPGKeyInfo ();
+}
+
+/**
+ * Reflect the active theme on the segmented control's ARIA state and styling.
+ * @param {"system"|"dark"|"light"} theme
+ */
+function updateThemeSegments (theme) {
+    const segments = document.querySelectorAll ("#themeSegmented .segment");
+    for (const seg of segments) {
+        const active = seg.dataset.theme === theme;
+        seg.setAttribute ("aria-checked", String (active));
+        // Roving tabindex — only the active segment is in the Tab order
+        seg.tabIndex = active ? 0 : -1;
+    }
 }
 
 async function loadGPGKeyInfo () {
@@ -378,6 +400,40 @@ function bindEvents () {
     // Save
     $ ("#saveBtn")
         .addEventListener ("click", saveSettings);
+
+    // ── Theme segmented control ──
+    // Click persists via UPDATE_SETTINGS (partial merge) and applies the
+    // theme instantly — no full Save needed. Arrow keys implement standard
+    // radio-group keyboard navigation.
+    const themeSegmented = $ ("#themeSegmented");
+    const segments = [...themeSegmented.querySelectorAll (".segment")];
+
+    const pickTheme = async (theme, focusEl) => {
+        applyTheme (theme);
+        updateThemeSegments (theme);
+        if (focusEl) focusEl.focus ();
+        const resp = await sendMessage (MSG.UPDATE_SETTINGS, {ui_theme: theme});
+        if (!resp?.ok) {
+            showToast ("Failed to save theme", "error");
+        }
+    };
+
+    for (const seg of segments) {
+        seg.addEventListener ("click", () => pickTheme (seg.dataset.theme, seg));
+    }
+
+    themeSegmented.addEventListener ("keydown", (e) => {
+        const idx = segments.indexOf (document.activeElement);
+        if (idx === -1) return;
+        let next = idx;
+        if (e.key === "ArrowLeft" || e.key === "ArrowUp") next = (idx - 1 + segments.length) % segments.length;
+        else if (e.key === "ArrowRight" || e.key === "ArrowDown") next = (idx + 1) % segments.length;
+        else if (e.key === "Home") next = 0;
+        else if (e.key === "End") next = segments.length - 1;
+        else return;
+        e.preventDefault ();
+        pickTheme (segments[next].dataset.theme, segments[next]);
+    });
 
     // Token visibility toggle
     $ ("#toggleTokenBtn")

@@ -14,6 +14,10 @@ import { MSG, EDITABLE_FIELDS, AUTO_FIELDS, GENRE_PRESETS, STORAGE_KEYS } from "
 import { debounce, extractAppId, formatTime, truncate } from "../shared/utils.js";
 import { $, sendMessage, showToast, showUndoToast } from "../shared/ui-helpers.js";
 import { confirmDialog } from "../shared/modal.js";
+import { initThemeSync } from "../shared/theme-applier.js";
+
+// Apply persisted ui_theme as early as possible
+initThemeSync();
 
 // ── DOM refs ──
 const queueCountEl = $("#queueCount");

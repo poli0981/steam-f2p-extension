@@ -725,12 +725,19 @@ a:hover {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   Light theme — auto-applied when OS prefers-color-scheme is light.
+   Light theme — applies when:
+     (a) the OS prefers-color-scheme is light AND no explicit
+         override is set via <html data-theme="dark"|"light">
+     (b) <html data-theme="light"> is set from settings
    Overrides only the color tokens; spacing, radius, typography and
    transitions stay the same.
+
+   The explicit override chain is driven by shared/theme-applier.js.
    ══════════════════════════════════════════════════════════════ */
+
+/* --- Token block (applied by both triggers below via @media + attr) --- */
 @media (prefers-color-scheme: light) {
-    :root {
+    :root:not([data-theme="dark"]) {
         --bg-primary              : #EAEFF5;
         --bg-secondary            : #DCE4EC;
         --bg-tertiary             : #F5F7FA;
@@ -743,10 +750,9 @@ a:hover {
 
         --text-primary            : #1B2838;
         --text-secondary          : #4A5568;
-        --text-muted              : #64748B;   /* 4.7:1 on white card */
+        --text-muted              : #64748B;
         --text-heading            : #0F1724;
 
-        /* Darker blue reads better on light bg than the Steam-blue of dark mode */
         --accent                  : #1E88E5;
         --accent-hover            : #1976D2;
         --accent-contrast         : #FFFFFF;
@@ -774,36 +780,70 @@ a:hover {
         --shadow-lg               : 0 10px 15px rgba(15, 23, 42, 0.07),
                                     0 20px 35px rgba(15, 23, 42, 0.10);
     }
-
-    /* Keep the pulsing "online" halo visible in light mode */
-    .status-dot.online {
-        box-shadow : 0 0 6px rgba(22, 163, 74, 0.6);
-    }
-
-    /* Scrollbar adapts */
-    ::-webkit-scrollbar-track {
-        background : transparent;
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background : var(--border);
-    }
-
-    /* Toast border tint looks better dark on light translucent surface */
-    .toast {
-        border : 1px solid rgba(15, 23, 42, 0.10);
-    }
-
-    .toast-action {
-        background   : rgba(0, 0, 0, 0.12);
-        border-color : rgba(0, 0, 0, 0.18);
-    }
-
-    .toast-action:hover {
-        background   : rgba(0, 0, 0, 0.2);
-        border-color : rgba(0, 0, 0, 0.3);
-    }
 }
+
+/* Explicit light override — wins over the default dark tokens even when
+   the OS preference is dark */
+:root[data-theme="light"] {
+    --bg-primary              : #EAEFF5;
+    --bg-secondary            : #DCE4EC;
+    --bg-tertiary             : #F5F7FA;
+    --bg-card                 : #FFFFFF;
+    --bg-input                : #F0F4F8;
+    --bg-hover                : #E4EBF2;
+
+    --bg-primary-translucent  : rgba(234, 239, 245, 0.82);
+    --bg-tertiary-translucent : rgba(245, 247, 250, 0.85);
+
+    --text-primary            : #1B2838;
+    --text-secondary          : #4A5568;
+    --text-muted              : #64748B;
+    --text-heading            : #0F1724;
+
+    --accent                  : #1E88E5;
+    --accent-hover            : #1976D2;
+    --accent-contrast         : #FFFFFF;
+
+    --accent-green            : #16A34A;
+    --accent-green-hover      : #15803D;
+    --accent-green-contrast   : #FFFFFF;
+
+    --accent-red              : #DC2626;
+    --accent-red-hover        : #B91C1C;
+    --accent-red-contrast     : #FFFFFF;
+
+    --accent-yellow           : #D97706;
+    --accent-yellow-hover     : #B45309;
+    --accent-yellow-contrast  : #FFFFFF;
+
+    --border                  : #CBD5E0;
+    --border-focus            : #1E88E5;
+    --border-subtle           : #E2E8F0;
+
+    --shadow-sm               : 0 1px 2px rgba(15, 23, 42, 0.04),
+                                0 1px 3px rgba(15, 23, 42, 0.06);
+    --shadow-md               : 0 4px 6px rgba(15, 23, 42, 0.05),
+                                0 10px 20px rgba(15, 23, 42, 0.08);
+    --shadow-lg               : 0 10px 15px rgba(15, 23, 42, 0.07),
+                                0 20px 35px rgba(15, 23, 42, 0.10);
+}
+
+/* --- Component tweaks shared by both light triggers --- */
+@media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) .status-dot.online  { box-shadow : 0 0 6px rgba(22, 163, 74, 0.6); }
+    :root:not([data-theme="dark"]) ::-webkit-scrollbar-track { background : transparent; }
+    :root:not([data-theme="dark"]) ::-webkit-scrollbar-thumb { background : var(--border); }
+    :root:not([data-theme="dark"]) .toast              { border : 1px solid rgba(15, 23, 42, 0.10); }
+    :root:not([data-theme="dark"]) .toast-action       { background : rgba(0, 0, 0, 0.12); border-color : rgba(0, 0, 0, 0.18); }
+    :root:not([data-theme="dark"]) .toast-action:hover { background : rgba(0, 0, 0, 0.2); border-color : rgba(0, 0, 0, 0.3); }
+}
+
+:root[data-theme="light"] .status-dot.online       { box-shadow : 0 0 6px rgba(22, 163, 74, 0.6); }
+:root[data-theme="light"] ::-webkit-scrollbar-track { background : transparent; }
+:root[data-theme="light"] ::-webkit-scrollbar-thumb { background : var(--border); }
+:root[data-theme="light"] .toast                    { border : 1px solid rgba(15, 23, 42, 0.10); }
+:root[data-theme="light"] .toast-action             { background : rgba(0, 0, 0, 0.12); border-color : rgba(0, 0, 0, 0.18); }
+:root[data-theme="light"] .toast-action:hover       { background : rgba(0, 0, 0, 0.2); border-color : rgba(0, 0, 0, 0.3); }
 
 /* Respect reduced-motion preferences — skip hover lift and toast bounce */
 @media (prefers-reduced-motion: reduce) {

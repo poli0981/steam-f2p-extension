@@ -10,7 +10,7 @@
  */
 
 import {MSG} from "../shared/constants.js";
-import {loadQueue, loadSettings, saveSettings, storageClearAll} from "../shared/storage.js";
+import {loadQueue, loadSettings, saveSettings, storageClearAll, updateSettings} from "../shared/storage.js";
 import {clearLogs, exportLogsJSON, getLogs, logError, logInfo, logWarn} from "../shared/logger.js";
 import {extractAppId} from "../shared/utils.js";
 import {addToQueue, getQueueSize, removeFromQueue, restoreEntries, restoreEntry, updateEntry} from "./queue-manager.js";
@@ -264,6 +264,15 @@ async function handleMessage(message, sender) {
             await saveSettings(data);
             await logInfo("settings", "Settings saved");
             return {ok: true};
+        }
+
+        case MSG.UPDATE_SETTINGS: {
+            if (!data || typeof data !== "object" || Array.isArray(data)) {
+                return {ok: false, error: "No partial settings object provided"};
+            }
+            const updated = await updateSettings(data);
+            await logInfo("settings", "Settings partially updated", {keys: Object.keys(data)});
+            return {ok: true, data: updated};
         }
 
         // ── Logging ──

@@ -10,6 +10,13 @@ import { MSG, QUEUE_MAX, STORAGE_KEYS } from "../shared/constants.js";
 import { truncate } from "../shared/utils.js";
 import { $, sendMessage, showToast } from "../shared/ui-helpers.js";
 import { confirmDialog } from "../shared/modal.js";
+import { initThemeSync } from "../shared/theme-applier.js";
+
+// Apply the user's ui_theme setting before any paint. initThemeSync is
+// async (reads storage) but the default dark theme renders instantly, so
+// light-mode users may see a brief dark flash if they overrode the OS.
+// Acceptable trade-off until we move this to a top-of-<head> inline script.
+initThemeSync();
 
 /**
  * Fire-and-forget "open extension page" request.
