@@ -92,6 +92,9 @@ export const DEFAULT_SETTINGS = {
     // Logging
     log_level: "info",
     log_max_entries: 500,
+
+    // UI
+    ui_theme: "system",   // "system" | "dark" | "light"
 };
 
 // ── Message types (content script ↔ service worker) ──
@@ -119,4 +122,5 @@ export const MSG = {
     RESCAN_PAGE:         "RESCAN_PAGE",
     RESTORE_ENTRY:       "RESTORE_ENTRY",
     OPEN_EXTENSION_PAGE: "OPEN_EXTENSION_PAGE",
+    UPDATE_SETTINGS:     "UPDATE_SETTINGS",
 };

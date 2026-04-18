@@ -7,6 +7,47 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.11.0] - 2026-04-19
+
+### Added
+
+- **In-app theme toggle** in Settings → Appearance. Three-state segmented control:
+  - **System** (default) — follows OS `prefers-color-scheme`
+  - **Light** — force light theme regardless of OS
+  - **Dark** — force dark theme regardless of OS
+- Preference persists under `settings.ui_theme` in `chrome.storage.local` and is applied across popup, queue,
+  and settings pages.
+- **Instant preview** — clicking a segment flips the UI immediately without needing to press Save.
+- **Cross-tab sync** — changing the theme on the Settings page propagates to any open Queue tab (and vice
+  versa) via `chrome.storage.onChanged`.
+- **OS change reactive** — when in *System* mode, flipping your OS appearance flips the extension too,
+  thanks to a `window.matchMedia("(prefers-color-scheme: light)")` listener.
+- Keyboard: Arrow-Left/Right, Home, End cycle the segmented control (standard radio-group pattern).
+  ARIA `role="radiogroup"` + `aria-checked` + roving `tabindex`.
+
+### Added (infra)
+
+- **`shared/theme-applier.js`** — new module exporting `applyTheme(setting)` and `initThemeSync()`. Each UI
+  page imports and calls it at the top of its bundle so `<html data-theme>` is set before first paint.
+- **`MSG.UPDATE_SETTINGS`** — partial-merge settings save, wrapping the existing `updateSettings()` helper
+  from `shared/storage.js`. Lets the theme toggle persist without triggering a full-form save.
+
+### Changed
+
+- **`shared/theme.css`** — light-mode tokens now apply via **two** triggers:
+  - The existing `@media (prefers-color-scheme: light) :root:not([data-theme="dark"])` branch (system
+    following, same as v1.7.0+ behaviour)
+  - A new `:root[data-theme="light"]` explicit override (wins regardless of OS)
+  - A `[data-theme="dark"]` explicit override blocks system-light leakage so dark stays dark on OS-light.
+- **`DEFAULT_SETTINGS.ui_theme = "system"`** added to `shared/constants.js`.
+
+### Phase B progress
+
+Remaining: toast stack + undo progress bar (Task 5). Modal, card tabs, skeleton loaders, and theme toggle
+are all in. Ready for the v2.0.0 ribbon-cutting once Task 5 is done.
+
+---
+
 ## [1.10.0] - 2026-04-19
 
 ### Added
@@ -482,9 +523,9 @@ git push origin vX.Y.Z   # workflow does the rest
 
 ### Planned / proposed
 
-- **UI refresh Phase B (targeting v2.0.0)** — remaining items: in-app theme toggle (system / dark / light),
-  toast stack with undo progress bar. (Themed modal shipped in v1.8.0; queue card redesign with tabs shipped in
-  v1.9.0; skeleton loaders shipped in v1.10.0.)
+- **UI refresh Phase B (targeting v2.0.0)** — remaining items: toast stack with undo progress bar. (Themed
+  modal shipped in v1.8.0; queue card redesign with tabs shipped in v1.9.0; skeleton loaders shipped in
+  v1.10.0; in-app theme toggle shipped in v1.11.0.)
 - Firefox (Manifest V3) support
 - Queue JSON export/import (backup / cross-browser migration)
 - GitHub health indicator in popup (surface recent rate-limit / auth errors)
@@ -508,4 +549,5 @@ git push origin vX.Y.Z   # workflow does the rest
 [1.8.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.7.0...v1.8.0
 [1.9.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.8.0...v1.9.0
 [1.10.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.9.0...v1.10.0
-[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.10.0...HEAD
+[1.11.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.10.0...v1.11.0
+[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.11.0...HEAD
