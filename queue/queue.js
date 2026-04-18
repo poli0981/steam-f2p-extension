@@ -13,6 +13,7 @@
 import { MSG, EDITABLE_FIELDS, AUTO_FIELDS, GENRE_PRESETS, STORAGE_KEYS } from "../shared/constants.js";
 import { debounce, extractAppId, formatTime, truncate } from "../shared/utils.js";
 import { $, sendMessage, showToast, showUndoToast } from "../shared/ui-helpers.js";
+import { confirmDialog } from "../shared/modal.js";
 
 // ── DOM refs ──
 const queueCountEl = $("#queueCount");
@@ -530,7 +531,13 @@ async function runPush({ appids, btn, originalHTML, onSuccess }) {
         if (onSuccess) onSuccess();
         await loadQueue();
     } else if (resp?.gpgFailed) {
-        const fallback = confirm(`GPG signing failed: ${resp.error}\n\nPush unsigned instead?`);
+        const fallback = await confirmDialog({
+            title: "GPG signing failed",
+            message: `${resp.error}\n\nPush unsigned instead?`,
+            confirmLabel: "Push unsigned",
+            cancelLabel:  "Cancel",
+            defaultAction: "cancel",
+        });
         if (fallback) {
             btn.innerHTML = `<span class="spinner"></span> Unsigned...`;
             const unsignedResp = await sendMessage(MSG.PUSH_QUEUE_UNSIGNED, payload);
@@ -554,7 +561,14 @@ pushAllBtn.addEventListener("click", async () => {
     if (currentQueue.length === 0) return;
 
     const count = currentQueue.length;
-    if (!confirm(`Push ${count} game(s) to GitHub?\nEntries will be staged for ingest into the tracker.`)) return;
+    const ok = await confirmDialog({
+        title:        `Push ${count} game${count === 1 ? "" : "s"}?`,
+        message:      "Entries will be staged for ingest into the tracker.",
+        confirmLabel: "Push all",
+        cancelLabel:  "Cancel",
+        defaultAction: "confirm",
+    });
+    if (!ok) return;
 
     await runPush({
         appids: undefined,
@@ -567,7 +581,14 @@ pushSelectedBtn.addEventListener("click", async () => {
     if (selectedAppids.size === 0) return;
 
     const count = selectedAppids.size;
-    if (!confirm(`Push ${count} selected game(s) to GitHub?\nEntries will be staged for ingest into the tracker.`)) return;
+    const ok = await confirmDialog({
+        title:        `Push ${count} selected game${count === 1 ? "" : "s"}?`,
+        message:      "Entries will be staged for ingest into the tracker.",
+        confirmLabel: `Push ${count}`,
+        cancelLabel:  "Cancel",
+        defaultAction: "confirm",
+    });
+    if (!ok) return;
 
     const appids = [...selectedAppids];
     const originalHTML = pushSelectedBtn.innerHTML;
@@ -588,7 +609,16 @@ pushSelectedBtn.addEventListener("click", async () => {
 
 clearAllBtn.addEventListener("click", async () => {
     if (currentQueue.length === 0) return;
-    if (!confirm(`Remove all ${currentQueue.length} game(s) from queue?\nYou will have a few seconds to Undo.`)) return;
+    const count = currentQueue.length;
+    const ok = await confirmDialog({
+        title:        `Clear ${count} game${count === 1 ? "" : "s"}?`,
+        message:      "You will have a few seconds to Undo after clearing.",
+        confirmLabel: "Clear",
+        cancelLabel:  "Cancel",
+        danger:       true,
+        defaultAction: "cancel",
+    });
+    if (!ok) return;
 
     clearAllBtn.disabled = true;
     clearAllBtn.textContent = "Clearing...";
