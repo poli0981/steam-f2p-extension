@@ -7,6 +7,36 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.6.0] - 2026-04-18
+
+### Added
+
+- **Push Selected** — each queue card now has a checkbox; the new *Push Selected (N)* button pushes only the checked
+  entries. Leverages the existing `pushQueue({appids})` filter in `background/push-handler.js`. Selection state survives
+  auto-refresh and is pruned to live entries after every re-render.
+- **Scan Page** — a small *Scan* button inside the popup's detected-game card asks the active Steam tab's content
+  script to re-run detection without a page reload. Picks up late-loading DOM (e.g. the language table, tags arriving
+  after `document_idle`). No new manifest permissions — uses `chrome.tabs.sendMessage` to the existing content script.
+  - `content/detector.js` orchestrator refactored: the scrape body lives in `SF2P.runDetection()`, invoked once at
+    `document_idle` and again on `RESCAN_PAGE` messages.
+  - `content/lib-dom.js` exposes `SF2P.clearDomCache()` which is called before every re-scan so cached selectors get
+    re-queried.
+- **Undo toast** for *Remove* and *Clear All* on the queue page. A new `showUndoToast(text, onUndo, opts)` in
+  `shared/ui-helpers.js` renders an inline `[Undo]` button next to the text. Undo restores the entry(ies) verbatim via
+  the new `MSG.RESTORE_ENTRY` path — original `added_at`, notes, and edited fields are preserved because
+  `restoreEntry()` and `restoreEntries()` in `background/queue-manager.js` bypass `makeQueueEntry()` (which would
+  otherwise regenerate the timestamp).
+- `MSG.RESCAN_PAGE` and `MSG.RESTORE_ENTRY` added to `shared/constants.js`.
+
+### Changed
+
+- `queue/queue.js` — shared `runPush({appids, btn, originalHTML, onSuccess})` helper now powers both `pushAllBtn` and
+  the new `pushSelectedBtn`, preserving the GPG fallback flow.
+- `shared/theme.css` — styles for `.toast-undo` / `.toast-action` (the inline Undo button).
+- `queue/queue.css` — styles for `.game-card-select` checkbox and `.is-selected` outline.
+
+---
+
 ## [1.5.1] - 2026-04-18
 
 ### Added
@@ -293,7 +323,6 @@ git push origin vX.Y.Z   # workflow does the rest
 ### Planned / proposed
 
 - Firefox (Manifest V3) support
-- Push selected games (checkbox selection in queue)
 - Queue JSON export/import (backup / cross-browser migration)
 - GitHub health indicator in popup (surface recent rate-limit / auth errors)
 - Keyboard shortcuts via the `commands` API (`Ctrl+Shift+Q` queue, `Ctrl+Shift+,` settings)
@@ -310,4 +339,5 @@ git push origin vX.Y.Z   # workflow does the rest
 [1.4.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.3.0...v1.4.0
 [1.5.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.4.0...v1.5.0
 [1.5.1]: https://github.com/poli0981/steam-f2p-extension/compare/v1.5.0...v1.5.1
-[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.5.1...HEAD
+[1.6.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.5.1...v1.6.0
+[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.6.0...HEAD

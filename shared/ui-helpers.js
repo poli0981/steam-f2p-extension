@@ -45,3 +45,52 @@ export function showToast(text, type = "info") {
         setTimeout(() => toast.remove(), 300);
     }, 2500);
 }
+
+/**
+ * Show a toast with an inline "Undo" button.
+ *
+ * Clicking Undo invokes the callback and dismisses the toast immediately.
+ * If the duration elapses without a click, the toast fades and the action
+ * is considered confirmed.
+ *
+ * @param {string} text
+ * @param {() => (void|Promise<void>)} onUndo
+ * @param {{duration?: number, type?: string, label?: string}} [opts]
+ */
+export function showUndoToast(text, onUndo, opts = {}) {
+    const { duration = 6000, type = "info", label = "Undo" } = opts;
+
+    // Replace any currently-visible toast (same pattern as showToast)
+    document.querySelectorAll(".toast").forEach((t) => t.remove());
+
+    const toast = document.createElement("div");
+    toast.className = `toast toast-${type} toast-undo`;
+
+    const textSpan = document.createElement("span");
+    textSpan.className = "toast-text";
+    textSpan.textContent = text;
+
+    const undoBtn = document.createElement("button");
+    undoBtn.type = "button";
+    undoBtn.className = "toast-action";
+    undoBtn.textContent = label;
+
+    toast.appendChild(textSpan);
+    toast.appendChild(undoBtn);
+    document.body.appendChild(toast);
+
+    let dismissed = false;
+    const dismiss = () => {
+        if (dismissed) return;
+        dismissed = true;
+        toast.classList.add("fade-out");
+        setTimeout(() => toast.remove(), 300);
+    };
+
+    undoBtn.addEventListener("click", () => {
+        dismiss();
+        try { onUndo(); } catch (err) { console.error("[undo] callback failed:", err); }
+    });
+
+    setTimeout(dismiss, duration);
+}

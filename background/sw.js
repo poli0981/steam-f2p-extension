@@ -13,7 +13,7 @@ import {MSG} from "../shared/constants.js";
 import {loadQueue, loadSettings, saveSettings, storageClearAll} from "../shared/storage.js";
 import {clearLogs, exportLogsJSON, getLogs, logError, logInfo, logWarn} from "../shared/logger.js";
 import {extractAppId} from "../shared/utils.js";
-import {addToQueue, getQueueSize, removeFromQueue, updateEntry} from "./queue-manager.js";
+import {addToQueue, getQueueSize, removeFromQueue, restoreEntries, restoreEntry, updateEntry} from "./queue-manager.js";
 import {checkDuplicate, clearDedupCache, refreshDedupCache} from "./dedup-checker.js";
 import {pushQueue, pushQueueUnsigned} from "./push-handler.js";
 import {clearCache as clearGitHubCache} from "./github-api.js";
@@ -110,6 +110,15 @@ async function handleMessage(message, sender) {
 
         case MSG.REMOVE_FROM_QUEUE: {
             const result = await removeFromQueue(data?.appid);
+            await updateBadge();
+            return result;
+        }
+
+        case MSG.RESTORE_ENTRY: {
+            // Single-entry or batch restore depending on payload shape.
+            const result = Array.isArray(data?.entries)
+                ? await restoreEntries(data.entries)
+                : await restoreEntry(data?.entry);
             await updateBadge();
             return result;
         }

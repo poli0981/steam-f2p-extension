@@ -116,6 +116,7 @@ The extension relies on the following MV3 features that must be supported by the
 - `chrome.storage.local` API + `chrome.storage.onChanged` events (live refresh of queue/settings)
 - `chrome.runtime.sendMessage` / `onMessage` with async response pattern
 - `chrome.tabs.query` / `chrome.tabs.update` / `chrome.windows.update` (singleton queue & settings tabs)
+- `chrome.tabs.sendMessage` (popup → content script, used by the Scan Page re-scrape feature)
 - `chrome.action` API (badge text, popup)
 - Content scripts with `"run_at": "document_idle"` — multi-file content script list (9 files load in order, shared `globalThis.SF2P` namespace)
 

@@ -230,3 +230,88 @@ export async function getQueueSize () {
     const queue = await loadQueue ();
     return queue.length;
 }
+
+/**
+ * Restore a previously-removed entry verbatim (undo support).
+ *
+ * Unlike addToQueue(), this does NOT go through makeQueueEntry() —
+ * the entry object is persisted as-is, so added_at, notes, edited
+ * fields, etc. survive a delete → undo round-trip. Dedup is not
+ * re-checked because the caller already had the entry.
+ *
+ * If the appid is already present (e.g. the user re-added manually
+ * before clicking Undo), the call is a no-op success.
+ *
+ * @param {object} entry - Queue entry to restore
+ * @returns {Promise<{ok: boolean, error?: string, data?: object}>}
+ */
+export async function restoreEntry (entry) {
+    if (!entry || !entry.link) {
+        return {ok: false, error: "No entry or link provided"};
+    }
+
+    const appid = extractAppId (entry.link);
+    if (!appid) {
+        return {ok: false, error: "Could not extract appid from link"};
+    }
+
+    const queue = await loadQueue ();
+
+    if (queue.length >= QUEUE_MAX) {
+        await logWarn ("queue", `Restore rejected — queue full (${QUEUE_MAX}/${QUEUE_MAX})`);
+        return {
+            ok: false,
+            error: `Queue is full (${QUEUE_MAX}/${QUEUE_MAX}). Push or remove entries first.`,
+        };
+    }
+
+    const already = queue.some ((g) => extractAppId (g.link) === appid);
+    if (already) {
+        return {ok: true, data: {entry, queueSize: queue.length, alreadyPresent: true}};
+    }
+
+    queue.push (entry);
+    await saveQueue (queue);
+
+    await logInfo ("queue", `Restored entry: ${entry.name || appid}`, {appid});
+    return {ok: true, data: {entry, queueSize: queue.length}};
+}
+
+/**
+ * Restore many entries at once (undo for Clear All).
+ * Each entry goes through the same path as restoreEntry(), preserving order.
+ *
+ * @param {object[]} entries
+ * @returns {Promise<{ok: boolean, restored: number, skipped: number}>}
+ */
+export async function restoreEntries (entries) {
+    if (!Array.isArray (entries) || entries.length === 0) {
+        return {ok: false, restored: 0, skipped: 0, error: "No entries provided"};
+    }
+
+    const queue = await loadQueue ();
+    const existing = new Set (queue.map ((g) => extractAppId (g.link)));
+    let restored = 0, skipped = 0;
+
+    for (const entry of entries) {
+        if (queue.length >= QUEUE_MAX) {
+            skipped += entries.length - (restored + skipped);
+            break;
+        }
+        const appid = entry && extractAppId (entry.link);
+        if (!appid || existing.has (appid)) {
+            skipped++;
+            continue;
+        }
+        queue.push (entry);
+        existing.add (appid);
+        restored++;
+    }
+
+    if (restored > 0) {
+        await saveQueue (queue);
+        await logInfo ("queue", `Restored ${restored} entries (skipped ${skipped})`);
+    }
+
+    return {ok: true, restored, skipped};
+}
