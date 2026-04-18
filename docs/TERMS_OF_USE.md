@@ -1,7 +1,7 @@
 # Terms of Use
 
-**Last updated:** March 2026  
-**Applies to:** Steam F2P Tracker Extension (Chrome/Chromium)
+**Last updated:** April 2026  
+**Applies to:** Steam F2P Tracker Extension (Chrome/Chromium) — v1.5.1
 
 ---
 

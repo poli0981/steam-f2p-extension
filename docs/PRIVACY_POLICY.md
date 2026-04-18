@@ -1,7 +1,7 @@
 # Privacy Policy
 
-**Last updated:** March 2026  
-**Applies to:** Steam F2P Tracker Extension (Chrome/Chromium)
+**Last updated:** April 2026  
+**Applies to:** Steam F2P Tracker Extension (Chrome/Chromium) — v1.5.1
 
 ---
 
@@ -85,10 +85,9 @@ The Extension communicates with exactly two external services:
 |-------------------------------------|------------------------------------------------------------------|
 | `storage`                           | Store settings, queue, logs, and cached data locally             |
 | `activeTab`                         | Read the current Steam store tab to detect game information      |
-| `alarms`                            | Schedule auto-push checks (if auto-push threshold is configured) |
 | Host: `store.steampowered.com/*`    | Content script runs on Steam store pages to extract game data    |
 | Host: `api.github.com/*`            | API calls to read/write repository files                         |
-| Host: `raw.githubusercontent.com/*` | Fetch raw file content for deduplication checks                  |
+| Host: `raw.githubusercontent.com/*` | Fetch raw file content for deduplication checks (files > 1 MB)   |
 
 ---
 
