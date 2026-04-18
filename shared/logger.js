@@ -90,16 +90,6 @@ export async function getLogs(filter = {}) {
 }
 
 /**
- * Get the N most recent log entries.
- * @param {number} n
- * @returns {Promise<Array>}
- */
-export async function getRecentLogs(n = 5) {
-    const logs = await storageGet(STORAGE_KEYS.LOGS, []);
-    return logs.slice(-n);
-}
-
-/**
  * Clear all stored logs.
  * @returns {Promise<void>}
  */

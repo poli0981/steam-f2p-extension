@@ -8,8 +8,7 @@
 
 import { MSG, QUEUE_MAX } from "../shared/constants.js";
 import { truncate } from "../shared/utils.js";
-
-const $ = (s) => document.querySelector(s);
+import { $, sendMessage, showToast } from "../shared/ui-helpers.js";
 
 const versionEl = $("#version");
 const statusDot = $("#statusDot");
@@ -29,24 +28,6 @@ const pushBtn = $("#pushBtn");
 const openQueueBtn = $("#openQueueBtn");
 const openSettingsBtn = $("#openSettingsBtn");
 const activityList = $("#activityList");
-
-// ── Helpers ──
-
-function sendMessage(type, data = null) {
-    return chrome.runtime.sendMessage({ type, data });
-}
-
-function showToast(text, type = "info") {
-    document.querySelectorAll(".toast").forEach((t) => t.remove());
-    const toast = document.createElement("div");
-    toast.className = `toast toast-${type}`;
-    toast.textContent = text;
-    document.body.appendChild(toast);
-    setTimeout(() => {
-        toast.classList.add("fade-out");
-        setTimeout(() => toast.remove(), 300);
-    }, 2800);
-}
 
 // ── Init ──
 

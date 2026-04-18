@@ -10,9 +10,7 @@
 
 import {DEFAULT_SETTINGS, MSG} from "../shared/constants.js";
 import {formatTime} from "../shared/utils.js";
-
-// ── DOM refs ──
-const $ = (s) => document.querySelector (s);
+import {$, sendMessage, showToast} from "../shared/ui-helpers.js";
 
 // Settings fields (id must match settings key)
 const FIELD_IDS = [
@@ -23,23 +21,6 @@ const FIELD_IDS = [
     "cache_ttl_minutes",
     "log_level", "log_max_entries",
 ];
-
-// ── Helpers ──
-
-function sendMessage (type, data = null) {
-    return chrome.runtime.sendMessage ({type, data});
-}
-
-function showToast (text, type = "info") {
-    const toast = document.createElement ("div");
-    toast.className = `toast toast-${type}`;
-    toast.textContent = text;
-    document.body.appendChild (toast);
-    setTimeout (() => {
-        toast.classList.add ("fade-out");
-        setTimeout (() => toast.remove (), 300);
-    }, 2500);
-}
 
 // ── Load settings into form ──
 

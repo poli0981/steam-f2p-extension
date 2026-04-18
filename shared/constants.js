@@ -46,9 +46,6 @@ export const EDITABLE_FIELDS = {
     safe:       { label: "Safe",       type: "select", options: ["?", "yes", "no"], default: "?" },
 };
 
-// ── Legacy alias for backward compatibility ──
-export const OPTIONAL_FIELDS = EDITABLE_FIELDS;
-
 // ── Genre preset list (used for tag-select dropdown) ──
 // Common Steam genres/tags for quick selection. User can also type "Other" + custom.
 export const GENRE_PRESETS = [
@@ -66,8 +63,6 @@ export const STORAGE_KEYS = {
     QUEUE:          "queue",
     LOGS:           "logs",
     CACHE_APPIDS:   "cache:appids",
-    CACHE_DATA_SHA: "cache:data_sha",
-    CACHE_TEMP_SHA: "cache:temp_sha",
     GPG_KEY_ENC:    "gpg:key_encrypted",
     GPG_KEY_META:   "gpg:key_meta",
 };
