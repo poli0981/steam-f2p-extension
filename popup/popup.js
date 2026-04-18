@@ -9,6 +9,7 @@
 import { MSG, QUEUE_MAX, STORAGE_KEYS } from "../shared/constants.js";
 import { truncate } from "../shared/utils.js";
 import { $, sendMessage, showToast } from "../shared/ui-helpers.js";
+import { confirmDialog } from "../shared/modal.js";
 
 /**
  * Fire-and-forget "open extension page" request.
@@ -402,7 +403,13 @@ function bindEvents() {
             updateQueueUI(resp.remaining || 0);
             await loadActivity();
         } else if (resp?.gpgFailed) {
-            const fallback = confirm(`GPG signing failed: ${resp.error}\n\nPush unsigned instead?`);
+            const fallback = await confirmDialog({
+                title:         "GPG signing failed",
+                message:       `${resp.error}\n\nPush unsigned instead?`,
+                confirmLabel:  "Push unsigned",
+                cancelLabel:   "Cancel",
+                defaultAction: "cancel",
+            });
             if (fallback) {
                 pushBtn.innerHTML = `<span class="spinner"></span> Unsigned...`;
                 const unsignedResp = await sendMessage(MSG.PUSH_QUEUE_UNSIGNED);

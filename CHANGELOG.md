@@ -7,6 +7,35 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.8.0] - 2026-04-19
+
+### Added
+
+- **Themed confirmation dialog** — new `shared/modal.js` exports `confirmDialog({title, message, confirmLabel,
+  cancelLabel, danger, defaultAction})` returning `Promise<boolean>`. Matches the extension's design system with
+  `backdrop-filter` blur, spring entry animation, and adapts automatically to the light theme shipped in v1.7.0.
+- Keyboard: `Enter` confirms, `Esc` cancels, `Tab` cycles focus between the two buttons (focus trap). Clicking the
+  backdrop cancels. Focus is returned to the previously focused element after close.
+- ARIA: `role="alertdialog"` + `aria-modal="true"` + `aria-labelledby`/`aria-describedby` for screen readers.
+- Modal styles in `shared/theme.css` (dark + light variants). Compact padding via `@media (max-width: 480px)` so the
+  modal fits nicely inside the 360 px popup.
+
+### Changed
+
+- **All 5 native `confirm()` call sites replaced** with `confirmDialog()`:
+  - `queue.js`: Push All, Push Selected, Clear All (danger variant), GPG-signing-failed fallback
+  - `popup.js`: GPG-signing-failed fallback
+- Confirm wording tightened (singular/plural handling, clearer button labels like "Push 3" instead of generic
+  "OK").
+
+### Phase B progress
+
+First ship of the v2.0.0 structural refresh roadmap. Remaining:
+queue card redesign (tabs), skeleton loaders, in-app theme toggle,
+toast stack with undo progress bar.
+
+---
+
 ## [1.7.0] - 2026-04-19
 
 ### Added
@@ -394,9 +423,9 @@ git push origin vX.Y.Z   # workflow does the rest
 
 ### Planned / proposed
 
-- **UI refresh Phase B (v2.0.0)** — themed modal replacing native `confirm()`, queue card redesign (single expandable
-  with tabs), skeleton loaders, in-app theme toggle (system / dark / light), toast stack with undo progress bar,
-  button press micro-interactions
+- **UI refresh Phase B (targeting v2.0.0)** — remaining items: queue card redesign (single expandable with tabs),
+  skeleton loaders, in-app theme toggle (system / dark / light), toast stack with undo progress bar,
+  button press micro-interactions. (Themed modal shipped in v1.8.0.)
 - Firefox (Manifest V3) support
 - Queue JSON export/import (backup / cross-browser migration)
 - GitHub health indicator in popup (surface recent rate-limit / auth errors)
@@ -417,4 +446,5 @@ git push origin vX.Y.Z   # workflow does the rest
 [1.6.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.5.1...v1.6.0
 [1.6.1]: https://github.com/poli0981/steam-f2p-extension/compare/v1.6.0...v1.6.1
 [1.7.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.6.1...v1.7.0
-[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.7.0...HEAD
+[1.8.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.7.0...v1.8.0
+[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.8.0...HEAD

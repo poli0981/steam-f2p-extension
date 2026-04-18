@@ -558,6 +558,87 @@ a:hover {
     font-feature-settings: "tnum";
 }
 
+/* ══════════════════════════════════════════════════════════════
+   Modal (themed confirm dialog) — see shared/modal.js
+   Full-viewport backdrop with blur; centered card with spring
+   entry and gentle exit.
+   ══════════════════════════════════════════════════════════════ */
+
+.modal-backdrop {
+    position                : fixed;
+    inset                   : 0;
+    z-index                 : 10000;
+    display                 : flex;
+    align-items             : center;
+    justify-content         : center;
+    padding                 : var(--space-lg);
+    background              : rgba(0, 0, 0, 0.55);
+    backdrop-filter         : blur(6px) saturate(140%);
+    -webkit-backdrop-filter : blur(6px) saturate(140%);
+    animation               : modal-backdrop-in 0.18s ease forwards;
+}
+
+.modal-backdrop.modal-out {
+    animation : modal-backdrop-out 0.18s ease forwards;
+}
+
+.modal {
+    background    : var(--bg-card);
+    border        : 1px solid var(--border);
+    border-radius : var(--radius-lg);
+    padding       : var(--space-xl);
+    max-width     : 420px;
+    width         : 100%;
+    box-shadow    : var(--shadow-lg);
+    animation     : modal-in 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.modal-backdrop.modal-out .modal {
+    animation : modal-out 0.18s ease forwards;
+}
+
+.modal-title {
+    font-size     : var(--font-lg);
+    font-weight   : 600;
+    color         : var(--text-heading);
+    margin-bottom : var(--space-sm);
+    letter-spacing: -0.1px;
+}
+
+.modal-message {
+    font-size     : var(--font-sm);
+    color         : var(--text-primary);
+    line-height   : 1.5;
+    white-space   : pre-line;   /* preserve "\n" from old confirm() strings */
+    margin-bottom : var(--space-lg);
+}
+
+.modal-actions {
+    display         : flex;
+    gap             : var(--space-sm);
+    justify-content : flex-end;
+}
+
+@keyframes modal-backdrop-in  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modal-backdrop-out { from { opacity: 1; } to { opacity: 0; } }
+
+@keyframes modal-in {
+    from { opacity: 0; transform: translateY(10px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes modal-out {
+    from { opacity: 1; transform: translateY(0) scale(1); }
+    to   { opacity: 0; transform: translateY(6px) scale(0.98); }
+}
+
+/* Compact padding in narrow viewports (e.g. the 360 px popup) */
+@media (max-width: 480px) {
+    .modal-backdrop { padding : var(--space-sm); }
+    .modal          { padding : var(--space-lg); }
+    .modal-title    { font-size : var(--font-md); }
+}
+
 .sr-only {
     position : absolute;
     width    : 1px;
