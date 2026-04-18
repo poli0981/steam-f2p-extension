@@ -7,6 +7,36 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.10.0] - 2026-04-19
+
+### Added
+
+- **Skeleton loaders** replace static "Checking page…" text and blank initial render:
+  - **Popup** `#detectedLoading` now shows a skeleton preview of the detected-game card (thumbnail, two name/meta
+    lines, two badge chips, and an action button placeholder). Layout dimensions match the real card so there is
+    zero layout shift when the real data arrives. The old "Checking page…" text is moved to a `.sr-only` live
+    region for screen readers.
+  - **Queue page** renders three skeleton cards on the very first load via a new `renderSkeletonCards(3)` helper
+    in `queue.js`. An `isFirstLoad` flag ensures subsequent re-renders (auto-refresh via `chrome.storage.onChanged`,
+    manual Refresh button) never flash skeletons — only the initial cold load shows them.
+- New `.skeleton` + `.skeleton-line` utility classes in `shared/theme.css`:
+  - Linear-gradient shimmer (1.5 s loop) using `--bg-card` → `--bg-hover` → `--bg-card`
+  - Theme-aware — auto light-mode branch swaps the gradient stops for lighter surfaces
+  - `pointer-events: none` + `user-select: none` so skeletons don't steal hover / select interactions
+  - Honours `@media (prefers-reduced-motion: reduce)` — shimmer animation disabled, solid peak colour held
+
+### Styling
+
+- `.game-card-skeleton` in `queue/queue.css` disables the v1.7.0 hover-lift effect on placeholder cards.
+- `.detected-loading` CSS simplified — no longer forces `text-align: center` (skeleton layout is a row).
+
+### ARIA
+
+- `#detectedLoading` carries `aria-busy="true"` + `aria-live="polite"` so assistive tech announces the loading
+  state without reading the decorative skeleton divs.
+
+---
+
 ## [1.9.0] - 2026-04-19
 
 ### Changed
@@ -452,9 +482,9 @@ git push origin vX.Y.Z   # workflow does the rest
 
 ### Planned / proposed
 
-- **UI refresh Phase B (targeting v2.0.0)** — remaining items: skeleton loaders, in-app theme toggle
-  (system / dark / light), toast stack with undo progress bar. (Themed modal shipped in v1.8.0;
-  queue card redesign with tabs shipped in v1.9.0.)
+- **UI refresh Phase B (targeting v2.0.0)** — remaining items: in-app theme toggle (system / dark / light),
+  toast stack with undo progress bar. (Themed modal shipped in v1.8.0; queue card redesign with tabs shipped in
+  v1.9.0; skeleton loaders shipped in v1.10.0.)
 - Firefox (Manifest V3) support
 - Queue JSON export/import (backup / cross-browser migration)
 - GitHub health indicator in popup (surface recent rate-limit / auth errors)
@@ -477,4 +507,5 @@ git push origin vX.Y.Z   # workflow does the rest
 [1.7.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.6.1...v1.7.0
 [1.8.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.7.0...v1.8.0
 [1.9.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.8.0...v1.9.0
-[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.9.0...HEAD
+[1.10.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.9.0...v1.10.0
+[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.10.0...HEAD

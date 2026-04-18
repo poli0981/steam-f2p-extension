@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Steam F2P Tracker",
-  "version": "1.9.0",
+  "version": "1.10.0",
   "description": "Auto-detect, queue, and push free-to-play Steam games to a GitHub tracker repository.",
   "permissions": [
     "storage",

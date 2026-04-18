@@ -111,6 +111,17 @@ body {
     box-shadow   : var(--shadow-md);
 }
 
+/* Skeleton placeholder — no hover lift, no cursor interaction */
+.game-card-skeleton {
+    pointer-events : none;
+}
+
+.game-card-skeleton:hover {
+    transform    : none;
+    box-shadow   : none;
+    border-color : var(--border-subtle);
+}
+
 /* ── Card header (thumbnail) ── */
 .game-card-header {
     position : relative;

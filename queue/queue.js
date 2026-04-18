@@ -496,6 +496,39 @@ function makeMetaTag(text, cls) {
     return span;
 }
 
+/**
+ * Build a single skeleton game card used during initial queue load.
+ * Dimensions mirror the real card so there is no layout shift when
+ * the real data arrives.
+ */
+function createSkeletonCard() {
+    const card = document.createElement("div");
+    card.className = "game-card game-card-skeleton";
+    card.setAttribute("aria-hidden", "true");
+    card.innerHTML = `
+        <div class="skeleton game-card-thumb"></div>
+        <div class="game-card-body">
+            <div class="skeleton skeleton-line" style="width:72%; height:14px; margin-bottom:10px;"></div>
+            <div class="game-card-meta">
+                <span class="skeleton" style="width:56px; height:14px; border-radius:3px;"></span>
+                <span class="skeleton" style="width:72px; height:14px; border-radius:3px;"></span>
+                <span class="skeleton" style="width:44px; height:14px; border-radius:3px;"></span>
+            </div>
+        </div>
+        <div class="skeleton" style="width:100%; height:26px; border-radius:0; margin-top:1px;"></div>
+    `;
+    return card;
+}
+
+function renderSkeletonCards(count = 3) {
+    emptyState.style.display = "none";
+    queueGrid.innerHTML = "";
+    queueGrid.style.display = "grid";
+    for (let i = 0; i < count; i++) {
+        queueGrid.appendChild(createSkeletonCard());
+    }
+}
+
 // ── Handlers ──
 
 function updatePushSelectedBtn() {
@@ -549,7 +582,15 @@ async function handleFieldUpdate(appid, field, value) {
     }
 }
 
+let isFirstLoad = true;
+
 async function loadQueue() {
+    // Show skeletons only on the very first load — auto-refresh should
+    // re-render silently without a flash.
+    if (isFirstLoad) {
+        renderSkeletonCards(3);
+        isFirstLoad = false;
+    }
     const resp = await sendMessage(MSG.GET_QUEUE);
     const queue = resp?.ok ? resp.data : [];
     const filter = searchInput.value.trim();
