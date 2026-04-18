@@ -230,24 +230,3 @@ export async function getQueueSize () {
     const queue = await loadQueue ();
     return queue.length;
 }
-
-/**
- * Clear the entire queue.
- * @returns {Promise<{ok: boolean}>}
- */
-export async function clearQueue () {
-    await saveQueue ([]);
-    await logInfo ("queue", "Queue cleared");
-    return {ok: true};
-}
-
-/**
- * Get a single entry by appid (for inspection/debug).
- * @param {string} appid
- * @returns {Promise<object|null>}
- */
-export async function getEntry (appid) {
-    if (!appid) return null;
-    const queue = await loadQueue ();
-    return queue.find ((g) => extractAppId (g.link) === appid) || null;
-}

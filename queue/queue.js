@@ -12,9 +12,9 @@
 
 import { MSG, EDITABLE_FIELDS, AUTO_FIELDS, GENRE_PRESETS } from "../shared/constants.js";
 import { extractAppId, formatTime, truncate } from "../shared/utils.js";
+import { $, sendMessage, showToast } from "../shared/ui-helpers.js";
 
 // ── DOM refs ──
-const $ = (s) => document.querySelector(s);
 const queueCountEl = $("#queueCount");
 const queueGrid = $("#queueGrid");
 const emptyState = $("#emptyState");
@@ -24,24 +24,6 @@ const pushAllBtn = $("#pushAllBtn");
 const clearAllBtn = $("#clearAllBtn");
 
 let currentQueue = [];
-
-// ── Helpers ──
-
-function sendMessage(type, data = null) {
-    return chrome.runtime.sendMessage({ type, data });
-}
-
-function showToast(text, type = "info") {
-    document.querySelectorAll(".toast").forEach((t) => t.remove());
-    const toast = document.createElement("div");
-    toast.className = `toast toast-${type}`;
-    toast.textContent = text;
-    document.body.appendChild(toast);
-    setTimeout(() => {
-        toast.classList.add("fade-out");
-        setTimeout(() => toast.remove(), 300);
-    }, 2500);
-}
 
 // ── Render ──
 
@@ -465,7 +447,7 @@ pushAllBtn.addEventListener("click", async () => {
     if (currentQueue.length === 0) return;
 
     const count = currentQueue.length;
-    if (!confirm(`Push ${count} game(s) to GitHub?\nThis will append to scripts/temp_info.jsonl.`)) return;
+    if (!confirm(`Push ${count} game(s) to GitHub?\nEntries will be staged for ingest into the tracker.`)) return;
 
     pushAllBtn.disabled = true;
     pushAllBtn.innerHTML = `<span class="spinner"></span> Pushing...`;
