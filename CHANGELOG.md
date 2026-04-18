@@ -7,6 +7,125 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.5.1] - 2026-04-18
+
+### Added
+
+- **CI/CD release automation** — new `.github/workflows/release.yml` triggers on any `v*.*.*` tag push. Verifies
+  `manifest.json` version matches the tag, builds `steam-f2p-tracker-vX.Y.Z.zip` (excluding dev-only files), creates
+  a GitHub release with the tag annotation as body, and uploads the ZIP as an asset. Signed tags are preserved with
+  their "Verified" badge.
+
+### Release flow
+
+```bash
+# Bump manifest.json version, merge to main, then:
+git tag -s vX.Y.Z -m "release notes..."
+git push origin vX.Y.Z   # workflow does the rest
+```
+
+---
+
+## [1.5.0] - 2026-04-18
+
+### Added
+
+- **Singleton tabs** — new `shared/tab-manager.js` exporting `openExtensionPage(path)`. Clicking Queue or Settings in
+  the popup now focuses any existing tab (via `chrome.tabs.query({url})` + `chrome.tabs.update` + `chrome.windows.update`)
+  instead of piling up duplicates.
+- **Auto-refresh via `chrome.storage.onChanged`**:
+  - Queue page re-renders live (debounced 150 ms) when entries are added from the popup, removed by auto-push, or
+    edited elsewhere.
+  - Settings page reloads on settings / GPG-key changes, guarded by `isUserEditing()` so in-progress input is never
+    clobbered.
+  - Popup keeps the queue count and progress bar in sync while open.
+
+### Changed
+
+- **popup.js** — three `chrome.tabs.create(...)` sites replaced with `openExtensionPage()` (first-run setup, Queue
+  button, Settings button).
+
+---
+
+## [1.4.0] - 2026-04-18
+
+### Changed
+
+- **Detector split** — the 820-line monolithic `content/detector.js` is broken into 9 content-script files sharing a
+  `globalThis.SF2P` namespace:
+  - `content/ns.js` — namespace init
+  - `content/lib-dom.js` — `textOf`, `textsOf`, `hasCheck`, plus **cached selector getters** for `.app_tag`,
+    `.dev_row`, breadcrumbs, and `#appHeaderGridContainer` (each was previously re-queried 2–4× per detection)
+  - `content/extract-price.js` — schema.org + DOM price, paid-DLC scan
+  - `content/extract-type.js` — `isDLCPage`, `isDemo`, `isPlaytest`, `classifyFreeType`
+  - `content/extract-platform.js` — `detectOnlineOffline`, `extractPlatforms`
+  - `content/extract-anticheat.js` — `ANTI_CHEAT_DB` + two-pass detection
+  - `content/extract-metadata.js` — developer, publisher, release date, header image, name, genre, grid-layout helper
+  - `content/extract-lang-tags.js` — language table + popular tags
+  - `content/detector.js` — **orchestrator (149 lines, was 810)**, assembles `gameData`, dispatches `GAME_DETECTED`
+- **manifest.json** `content_scripts.js` lists all 9 files in load order.
+
+### Performance
+
+- **Cached selectors** — frequently-used DOM queries are resolved once per page load and reused by all extract modules.
+- **Early-return for DLC / demo / playtest** — the orchestrator now emits a minimal payload (name, header, genre,
+  developer, type flags) and skips AC detection, language table, full tag scrape, publisher, release date, description,
+  platforms. Saves ~40% scrape time on those page types. Safe because the popup blocks these from the queue anyway.
+
+---
+
+## [1.3.0] - 2026-04-18
+
+### Added
+
+- **Shared UI helpers** — new `shared/ui-helpers.js` exporting `$` (`document.querySelector`), `sendMessage`, and
+  `showToast`. Previously duplicated across `popup.js`, `queue.js`, `settings.js`.
+
+### Removed
+
+- **Unused `alarms` manifest permission** — declared but never used (auto-push fires synchronously after each add).
+- **Dead exports** (confirmed via grep, zero imports):
+  - `OPTIONAL_FIELDS` (legacy alias of `EDITABLE_FIELDS`)
+  - `CACHE_DATA_SHA`, `CACHE_TEMP_SHA` storage keys (abandoned caching strategy)
+  - `getRecentLogs()` from `shared/logger.js`
+  - `clearQueue()`, `getEntry()` from `background/queue-manager.js`
+
+### Changed
+
+- **queue.js** — push confirm dialog no longer references the deprecated `scripts/temp_info.jsonl` path in its wording.
+
+---
+
+## [1.2.1] - 2026-04-18
+
+### Fixed
+
+- **Language scraper** — rows Steam marks as "Not supported" (`<tr class="unsupported">` containing a single
+  `<td colspan="3">Not supported</td>`) were bypassing the `cells.length < 2` header-skip guard and getting pushed
+  with all flags `false`. `extractLanguages()` now:
+  - Primary filter: skips any row with `classList.contains("unsupported")`
+  - Defensive fallback: skips rows where none of interface / audio / subtitles have a checkmark
+
+---
+
+## [1.2.0] - 2026-04-18
+
+### Changed
+
+- **Multi-file dedup via `data/index.json`** — the dedup checker no longer reads a single `scripts/data.jsonl`.
+  Instead it reads `data/index.json` (manifest describing all data files and their entry counts) and fetches every
+  `data/data_NNN.jsonl` shard in parallel (`Promise.allSettled`). Falls back gracefully if the index is missing or an
+  individual shard errors.
+- **constants.js** — `REPO_DATA_PATH` removed; replaced with `REPO_INDEX_PATH = "data/index.json"` and
+  `REPO_DATA_DIR = "data/"`. `REPO_TEMP_PATH` unchanged — push still targets `scripts/temp_info.jsonl`.
+
+### Added
+
+- `getRawFileContent()` in `github-api.js` — fetches large files (> 1 MB) directly from `raw.githubusercontent.com`,
+  bypassing the Contents API's base64 size limit. Used as a fallback by the dedup checker.
+
+---
+
 ## [1.1.0] - 2026-03-26
 
 ### Added
@@ -171,18 +290,24 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-### Planned
+### Planned / proposed
 
 - Firefox (Manifest V3) support
 - Push selected games (checkbox selection in queue)
-- Import games from Steam curator list URL
-- Batch detection across Steam tag/search pages
-- Queue export/import (JSON backup)
+- Queue JSON export/import (backup / cross-browser migration)
+- GitHub health indicator in popup (surface recent rate-limit / auth errors)
+- Keyboard shortcuts via the `commands` API (`Ctrl+Shift+Q` queue, `Ctrl+Shift+,` settings)
+- PR-time validation workflow (manifest parse, version-bump check, SPDX header check)
+- Anti-cheat false-positive guards (word-boundary regex for short codes like `vac` / `eac`)
 
 ---
 
 [1.0.0]: https://github.com/poli0981/steam-f2p-extension/releases/tag/v1.0.0
-
 [1.1.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.0.0...v1.1.0
-
-[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.1.0...HEAD
+[1.2.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.1.0...v1.2.0
+[1.2.1]: https://github.com/poli0981/steam-f2p-extension/compare/v1.2.0...v1.2.1
+[1.3.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.2.1...v1.3.0
+[1.4.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.3.0...v1.4.0
+[1.5.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.4.0...v1.5.0
+[1.5.1]: https://github.com/poli0981/steam-f2p-extension/compare/v1.5.0...v1.5.1
+[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.5.1...HEAD

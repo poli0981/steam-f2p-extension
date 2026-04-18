@@ -30,7 +30,7 @@ LGPL-3.0:
 
 - **Provider:** Google (Chromium project)
 - **License:** BSD-3-Clause (Chromium), proprietary (Chrome)
-- **Usage:** `chrome.storage`, `chrome.runtime`, `chrome.tabs`, `chrome.action`, `chrome.alarms`
+- **Usage:** `chrome.storage` (+ `onChanged` events), `chrome.runtime`, `chrome.tabs`, `chrome.windows`, `chrome.action`
 - **Note:** These are browser-provided APIs, not bundled dependencies.
 
 ---

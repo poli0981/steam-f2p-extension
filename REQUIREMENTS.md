@@ -17,7 +17,7 @@ tested on, and the tools used during development.
 | **Disk**       | ~5 MB (extension files + local storage)                                                                                                                                  |
 | **Network**    | Internet connection (required for Steam page access and GitHub API calls)                                                                                                |
 | **GitHub**     | GitHub account with a [Personal Access Token](https://github.com/settings/tokens/new) (`repo` scope)                                                                     |
-| **Repository** | A GitHub repository following the [free-steam-games-list](https://github.com/poli0981/free-steam-games-list) structure (`scripts/data.jsonl`, `scripts/temp_info.jsonl`) |
+| **Repository** | A GitHub repository following the [free-steam-games-list](https://github.com/poli0981/free-steam-games-list) structure: `data/index.json` manifest, `data/data_NNN.jsonl` shards, and `scripts/temp_info.jsonl` push target |
 
 ### Recommended
 
@@ -113,12 +113,11 @@ The following tools were used to develop, test, and document this project:
 The extension relies on the following MV3 features that must be supported by the browser:
 
 - `"type": "module"` in service worker declaration (ES module imports)
-- `chrome.storage.local` API
+- `chrome.storage.local` API + `chrome.storage.onChanged` events (live refresh of queue/settings)
 - `chrome.runtime.sendMessage` / `onMessage` with async response pattern
-- `chrome.tabs.query` API
+- `chrome.tabs.query` / `chrome.tabs.update` / `chrome.windows.update` (singleton queue & settings tabs)
 - `chrome.action` API (badge text, popup)
-- `chrome.alarms` API (for auto-push scheduling)
-- Content scripts with `"run_at": "document_idle"`
+- Content scripts with `"run_at": "document_idle"` — multi-file content script list (9 files load in order, shared `globalThis.SF2P` namespace)
 
 ### Known Browser Differences
 

@@ -1,6 +1,6 @@
 # Disclaimer & Warnings
 
-**Last updated:** March 2026
+**Last updated:** April 2026 (v1.5.1)
 
 This document outlines important disclaimers and warnings regarding the use of the **Steam F2P Tracker Extension** ("the
 Extension"). By installing or using this Extension, you acknowledge that you have read and understood the following.
@@ -36,11 +36,16 @@ is made that the Extension will function correctly in all environments or scenar
 ## Companion Tool
 
 This Extension is designed as a companion tool for the [free-steam-games-list](https://github.com/poli0981/free-steam-games-list)
-repository. It pushes data to `scripts/temp_info.jsonl` via the GitHub Contents API.
+repository. It pushes data to `scripts/temp_info.jsonl` via the GitHub Contents API and reads existing entries for
+deduplication via the `data/index.json` manifest.
 
 - **You may need to modify the Extension** if you intend to use it with a different repository structure or workflow.
-- The Extension assumes a specific repository layout (`scripts/data.jsonl`, `scripts/temp_info.jsonl`) and may not
-  function correctly with other configurations.
+- The Extension assumes a specific repository layout:
+  - `data/index.json` — manifest listing all data shards and their entry counts
+  - `data/data_NNN.jsonl` — data shards (up to 800 entries each per `max_per_file`)
+  - `scripts/temp_info.jsonl` — push target, appended to by the extension
+
+  It may not function correctly with other configurations.
 
 ## Steam Store Links
 

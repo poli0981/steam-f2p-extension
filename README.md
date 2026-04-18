@@ -16,7 +16,7 @@ This extension sits in your browser toolbar while you browse the Steam store. Wh
 1. **Detects** game metadata — name, genre, price, developer, publisher, description, platforms, languages, tags,
    anti-cheat, online/offline status
 2. **Classifies** the game — Free to Play, Free Game, Demo, Playtest, or Paid
-3. **Checks for duplicates** against your GitHub tracker's existing data
+3. **Checks for duplicates** against your GitHub tracker's existing data (via `data/index.json` manifest)
 4. **Queues** the game locally with auto-detected info (read-only) and editable fields
 5. **Pushes** the full game data to `scripts/temp_info.jsonl` in your GitHub repository
 
@@ -59,10 +59,12 @@ validates, and catalogs the games automatically via GitHub Actions.
 
 - **Full data push** — all 20 fields serialized to JSONL (auto-detected + user-edited)
 - Push to `scripts/temp_info.jsonl` via GitHub Contents API
-- Remote deduplication against `data.jsonl` + `temp_info.jsonl`
+- Remote deduplication via `data/index.json` manifest — fetches all `data/data_NNN.jsonl` shards in parallel plus `scripts/temp_info.jsonl` for pending entries
+- Large-file fallback (>1 MB) through `raw.githubusercontent.com`
 - SHA conflict detection with automatic retry
 - Auto-push when queue reaches configurable threshold
 - Configurable commit message prefix
+- **CI-automated releases** — pushing a `vX.Y.Z` tag builds the ZIP and publishes a GitHub release via `.github/workflows/release.yml`
 
 ### GPG Signing (Optional)
 
@@ -215,24 +217,36 @@ Multi-developer example:
 ## Architecture
 
 ```
-steam-f2p-extension/          26 files · 0 npm dependencies
+steam-f2p-extension/          33 runtime files · 0 npm dependencies
 ├── manifest.json             Extension config (MV3, ES modules)
 ├── background/               Service worker modules
 │   ├── sw.js                 Entry point & message router
 │   ├── github-api.js         GitHub REST + Git Database API client
 │   ├── gpg-signer.js         GPG key management & commit signing
-│   ├── dedup-checker.js      Remote + local deduplication
+│   ├── dedup-checker.js      index.json-driven multi-file deduplication
 │   ├── push-handler.js       Push orchestrator (signed & unsigned)
 │   └── queue-manager.js      Queue CRUD with cap + field protection
-├── content/
-│   └── detector.js           Steam page parser (11 extractors, dual-layout)
+├── content/                  Steam page scraper — namespace + 7 extractors + orchestrator
+│   ├── ns.js                 globalThis.SF2P namespace init
+│   ├── lib-dom.js            DOM helpers + cached selectors
+│   ├── extract-price.js      schema.org + DOM price, paid-DLC scan
+│   ├── extract-type.js       DLC / demo / playtest / free-type
+│   ├── extract-platform.js   online/offline + OS platforms
+│   ├── extract-anticheat.js  20-system two-pass AC detection
+│   ├── extract-metadata.js   developer / publisher / release / name / genre
+│   ├── extract-lang-tags.js  languages table + popular tags
+│   └── detector.js           Orchestrator (assembles gameData, sends message)
 ├── popup/                    Toolbar popup (HTML + CSS + JS)
-├── queue/                    Full-page queue manager (dual-panel cards)
-├── settings/                 Full-page settings
-├── shared/                   Constants, storage, logger, utils, theme
+├── queue/                    Full-page queue manager (dual-panel cards, live-refresh)
+├── settings/                 Full-page settings (live-refresh, focus-aware)
+├── shared/                   Constants, storage, logger, utils, theme,
+│                             ui-helpers ($/sendMessage/showToast),
+│                             tab-manager (singleton tabs)
 ├── lib/
 │   └── openpgp.min.mjs       OpenPGP.js v6 (LGPL-3.0)
-└── icons/                    Extension icons (16, 48, 128)
+├── icons/                    Extension icons (16, 48, 128)
+└── .github/workflows/
+    └── release.yml           Tag-push → build ZIP → GitHub release
 ```
 
 ### Data Flow
@@ -241,24 +255,28 @@ steam-f2p-extension/          26 files · 0 npm dependencies
 Steam Store Page
        │
        ▼
- [Content Script]  ──  11 extractors: name, price, genre, developer(s),
-       │               publisher(s), description, platforms, languages,
-       │               tags, anti-cheat, release date
-       │               Dual-layout: .dev_row (single) / grid (multi)
+ [Content Scripts] ──  Namespace (ns.js) + cached DOM helpers (lib-dom.js) +
+       │               6 extractor modules sharing globalThis.SF2P.
+       │               Orchestrator (detector.js) assembles and dispatches.
+       │               Fast path on DLC/demo/playtest skips AC + language
+       │               + tag extraction (~40% time saved).
        ▼
- [Service Worker]  ──  Validates F2P, dedup checks (local + remote),
-       │               merges auto fields + auto-notes
+ [Service Worker]  ──  Validates F2P, dedup via data/index.json manifest,
+       │               merges auto fields + auto-notes.
+       │               chrome.storage.onChanged broadcasts updates to any
+       │               open queue/settings/popup page.
        ▼
- [Queue Storage]   ──  chrome.storage.local (up to 150 entries)
-       │               Auto fields: read-only (12 fields, arrays for dev/pub)
-       │               Editable fields: genre, type, AC, notes, safe
+ [Queue Storage]   ──  chrome.storage.local (up to 150 entries).
+       │               Auto fields: read-only (12 fields, arrays for dev/pub).
+       │               Editable fields: genre, type, AC, notes, safe.
        ▼
- [Push Handler]    ──  Serializes full entry (20 fields) to JSONL
-       │               developer/publisher as arrays in output
-       │               Appends to temp_info.jsonl on GitHub
-       │               (Contents API or signed Git Database API)
+ [Push Handler]    ──  Serializes full entry (20 fields) to JSONL.
+       │               developer/publisher as arrays in output.
+       │               Appends to scripts/temp_info.jsonl on GitHub
+       │               (Contents API or signed Git Database API).
        ▼
- [GitHub Repo]     ──  CI/CD ingests, validates, catalogs
+ [GitHub Repo]     ──  CI/CD ingests, validates, catalogs into
+                       data/data_NNN.jsonl shards, updates data/index.json.
 ```
 
 ### Permissions
@@ -267,10 +285,9 @@ Steam Store Page
 |-------------------------------------|--------------------------------------|
 | `storage`                           | Local queue, settings, logs, cache   |
 | `activeTab`                         | Read current Steam tab for detection |
-| `alarms`                            | Auto-push scheduling                 |
 | `host: store.steampowered.com/*`    | Content script on Steam pages        |
 | `host: api.github.com/*`            | Repository API calls                 |
-| `host: raw.githubusercontent.com/*` | Raw file fetch for dedup             |
+| `host: raw.githubusercontent.com/*` | Raw file fetch for dedup (>1 MB)     |
 
 ---
 
