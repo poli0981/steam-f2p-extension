@@ -7,6 +7,34 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.6.1] - 2026-04-18
+
+### Fixed
+
+- **Singleton-tab behaviour now works across tabs and windows.** The v1.5.0 implementation used
+  `chrome.tabs.query({url: chrome.runtime.getURL(...)})` from the popup, which Chrome silently ignores when the
+  extension lacks the `tabs` permission and has no matching host permission for `chrome-extension://` URLs. The URL
+  filter was being dropped, an unrelated tab was being picked up, and the fallback opened a duplicate. Clicking
+  **Queue** or **Settings** from any tab in any window now reliably focuses the existing tab.
+- Secondary fix: removed the race between `openExtensionPage(...)` (async) and `window.close()` in the popup — the
+  popup no longer relies on in-flight Chrome API calls completing after teardown.
+
+### Changed
+
+- **Tab registry moved to the service worker.** `background/sw.js` maintains a `Map<path, tabId>` of the extension
+  tabs it has created. New `MSG.OPEN_EXTENSION_PAGE` delegates the open/focus decision to the sw.
+  - sw creates the tab itself → knows the id without needing `chrome.tabs.query`
+  - `chrome.tabs.onRemoved` listener drops stale entries
+  - Reset Extension clears the registry alongside `detectedGames`
+  - Stale id (onRemoved hasn't fired yet) gracefully falls through to a new `chrome.tabs.create`
+- **Deleted** `shared/tab-manager.js` — the function now lives inside the sw.
+
+### Permissions
+
+No change — still only `storage` + `activeTab`.
+
+---
+
 ## [1.6.0] - 2026-04-18
 
 ### Added
@@ -340,4 +368,5 @@ git push origin vX.Y.Z   # workflow does the rest
 [1.5.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.4.0...v1.5.0
 [1.5.1]: https://github.com/poli0981/steam-f2p-extension/compare/v1.5.0...v1.5.1
 [1.6.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.5.1...v1.6.0
-[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.6.0...HEAD
+[1.6.1]: https://github.com/poli0981/steam-f2p-extension/compare/v1.6.0...v1.6.1
+[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.6.1...HEAD

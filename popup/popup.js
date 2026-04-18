@@ -9,7 +9,17 @@
 import { MSG, QUEUE_MAX, STORAGE_KEYS } from "../shared/constants.js";
 import { truncate } from "../shared/utils.js";
 import { $, sendMessage, showToast } from "../shared/ui-helpers.js";
-import { openExtensionPage } from "../shared/tab-manager.js";
+
+/**
+ * Fire-and-forget "open extension page" request.
+ * The service worker maintains a singleton tab registry so that repeat
+ * clicks focus the existing tab instead of opening a new one. Running
+ * in the sw avoids both the `tabs` permission requirement of
+ * chrome.tabs.query({url}) AND the race with window.close().
+ */
+function requestOpenPage(path) {
+    sendMessage(MSG.OPEN_EXTENSION_PAGE, { path });
+}
 
 const versionEl = $("#version");
 const statusDot = $("#statusDot");
@@ -78,7 +88,7 @@ async function checkFirstRun(settings) {
     </button>`;
     section.insertBefore(banner, section.firstChild.nextSibling);
     banner.querySelector("#firstRunSetupBtn").addEventListener("click", () => {
-        openExtensionPage("settings/settings.html");
+        requestOpenPage("settings/settings.html");
         window.close();
     });
 }
@@ -414,12 +424,12 @@ function bindEvents() {
     });
 
     openQueueBtn.addEventListener("click", () => {
-        openExtensionPage("queue/queue.html");
+        requestOpenPage("queue/queue.html");
         window.close();
     });
 
     openSettingsBtn.addEventListener("click", () => {
-        openExtensionPage("settings/settings.html");
+        requestOpenPage("settings/settings.html");
         window.close();
     });
 }
