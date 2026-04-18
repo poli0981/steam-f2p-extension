@@ -7,6 +7,35 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.9.0] - 2026-04-19
+
+### Changed
+
+- **Queue card redesign.** Replaces the two separate collapsible panels (`▾ Game Info (auto-detected)` and
+  `▾ Edit fields`) with a **single expandable *Details* section containing two tabs: Info / Edit**. Reduces
+  collapsed card height by ~30 px and makes the information hierarchy clearer — one affordance to expand, a
+  familiar tab pattern to switch context.
+- Info tab is the default visible panel; Edit tab is hidden until clicked.
+- ARIA: proper `role="tablist"` / `role="tab"` / `role="tabpanel"`, `aria-selected`, `aria-controls`,
+  `aria-labelledby`, plus Arrow-Left / Arrow-Right / Home / End keyboard navigation. Only the active tab is
+  tab-reachable (roving tabindex).
+- Graceful empty state inside the Info panel when an entry has no auto-detected metadata.
+- Toggle button now carries `aria-expanded` + `aria-controls`, keyboard-accessible.
+
+### Styling
+
+- New `.card-tabs`, `.card-tab`, `.card-tab-active`, `.card-panel`, `.card-panel-empty` in `queue/queue.css`.
+  Active tab gets an underline indicator in the accent colour.
+- Slide-in animation when the details section opens.
+- Retired old `.game-card-auto`, `.game-card-fields`, `.auto-toggle`, `.edit-toggle` CSS blocks — no references
+  left.
+
+### Phase B progress
+
+Remaining: skeleton loaders, in-app theme toggle UI, toast stack with undo progress bar.
+
+---
+
 ## [1.8.0] - 2026-04-19
 
 ### Added
@@ -423,9 +452,9 @@ git push origin vX.Y.Z   # workflow does the rest
 
 ### Planned / proposed
 
-- **UI refresh Phase B (targeting v2.0.0)** — remaining items: queue card redesign (single expandable with tabs),
-  skeleton loaders, in-app theme toggle (system / dark / light), toast stack with undo progress bar,
-  button press micro-interactions. (Themed modal shipped in v1.8.0.)
+- **UI refresh Phase B (targeting v2.0.0)** — remaining items: skeleton loaders, in-app theme toggle
+  (system / dark / light), toast stack with undo progress bar. (Themed modal shipped in v1.8.0;
+  queue card redesign with tabs shipped in v1.9.0.)
 - Firefox (Manifest V3) support
 - Queue JSON export/import (backup / cross-browser migration)
 - GitHub health indicator in popup (surface recent rate-limit / auth errors)
@@ -447,4 +476,5 @@ git push origin vX.Y.Z   # workflow does the rest
 [1.6.1]: https://github.com/poli0981/steam-f2p-extension/compare/v1.6.0...v1.6.1
 [1.7.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.6.1...v1.7.0
 [1.8.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.7.0...v1.8.0
-[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.8.0...HEAD
+[1.9.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.8.0...v1.9.0
+[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.9.0...HEAD
