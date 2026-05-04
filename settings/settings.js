@@ -10,7 +10,7 @@
 
 import {DEFAULT_SETTINGS, MSG, STORAGE_KEYS} from "../shared/constants.js";
 import {formatTime} from "../shared/utils.js";
-import {$, sendMessage, showToast} from "../shared/ui-helpers.js";
+import {$, sendMessage, showToast, showUndoToast} from "../shared/ui-helpers.js";
 import {applyTheme, initThemeSync} from "../shared/theme-applier.js";
 
 // Apply persisted ui_theme as early as possible
@@ -22,9 +22,42 @@ const FIELD_IDS = [
     "committer_name", "committer_email",
     "gpg_enabled",
     "auto_push_threshold", "commit_prefix",
-    "cache_ttl_minutes",
+    "cache_ttl_minutes", "auto_prune_queue",
     "log_level", "log_max_entries",
 ];
+
+// ── Undo helper for pruned queue entries ──
+
+/**
+ * If a prune result has removed entries, show an Undo toast that can
+ * restore them via MSG.RESTORE_ENTRY (batch form).
+ *
+ * @param {{removed: object[], remaining: number} | null | undefined} pruned
+ */
+function offerUndoIfPruned (pruned) {
+    if (!pruned || !Array.isArray (pruned.removed) || pruned.removed.length === 0) return;
+
+    const snapshot = pruned.removed;
+    showUndoToast (
+        `Pruned ${snapshot.length} duplicate(s) from queue`,
+        async () => {
+            const r = await sendMessage (MSG.RESTORE_ENTRY, {entries: snapshot});
+            if (!r?.ok) {
+                showToast (r?.error || "Restore failed", "error");
+                return;
+            }
+            const restored = r.data?.restored ?? snapshot.length;
+            const skipped = r.data?.skipped ?? 0;
+            if (skipped > 0) {
+                showToast (`Restored ${restored}, skipped ${skipped} (queue full)`, "warning");
+            }
+            else {
+                showToast (`Restored ${restored} entries`, "success");
+            }
+        },
+        {duration: 8000}
+    );
+}
 
 // ── Load settings into form ──
 
@@ -466,6 +499,7 @@ function bindEvents () {
             const resp = await sendMessage (MSG.REFRESH_CACHE);
             if (resp?.ok) {
                 showToast (`Cache refreshed: ${resp.data.appidCount} known appids`, "success");
+                offerUndoIfPruned (resp.data.pruned);
             }
             else {
                 showToast (resp?.error || "Cache refresh failed", "error");
@@ -473,6 +507,33 @@ function bindEvents () {
 
             btn.disabled = false;
             btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Refresh Cache Now`;
+        });
+
+    // Prune duplicates (manual)
+    $ ("#pruneQueueBtn")
+        .addEventListener ("click", async () => {
+            const btn = $ ("#pruneQueueBtn");
+            btn.disabled = true;
+            const originalHTML = btn.innerHTML;
+            btn.textContent = "Pruning...";
+
+            const resp = await sendMessage (MSG.PRUNE_QUEUE_DUPLICATES, {forceRefresh: true});
+
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+
+            if (!resp?.ok) {
+                showToast (resp?.error || "Prune failed", "error");
+                return;
+            }
+
+            const removed = resp.data?.removed || [];
+            if (removed.length === 0) {
+                showToast ("Queue is clean — no duplicates", "info");
+                return;
+            }
+
+            offerUndoIfPruned (resp.data);
         });
 
     // Log viewer

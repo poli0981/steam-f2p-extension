@@ -7,6 +7,44 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.13.0] - 2026-05-05
+
+### Added
+
+- **Auto-prune queue against master data** — when remote `data.jsonl` (or `temp_info.jsonl`) already
+  contains a game that is sitting in the local queue, the queue entry is now removed automatically. Triggers:
+  - **After successful push** (signed or unsigned) — silent; logged at info level under category `queue`.
+  - **After Settings → "Refresh Cache Now"** — toast surfaces the pruned count with an Undo button.
+  - **Manual** — new **Prune Duplicates Now** button in Settings → Cache.
+- **Setting: `auto_prune_queue`** (default **on**) — toggle the auto behaviour from Settings → Cache. Existing
+  installs inherit the default via `loadSettings()` defaults-merge; no migration needed.
+- **Undo** — every user-triggered prune (manual button or Refresh Cache) shows an 8 s undo toast that calls
+  `MSG.RESTORE_ENTRY` with the full removed-entry snapshots, mirroring the Clear-All flow from v1.6.0.
+
+### Changed
+
+- `MSG.REFRESH_CACHE` response now includes `data.pruned = {removed, remaining}` when auto-prune fired,
+  `null` otherwise.
+- `pushQueue()` and `pushQueueUnsigned()` no longer fire-and-forget `refreshDedupCache()`; they now call a
+  shared `refreshCacheAndMaybePrune(settings)` helper that also runs the prune step when the setting is on.
+
+### Added (infra)
+
+- **`MSG.PRUNE_QUEUE_DUPLICATES`** — new message type. Payload `{forceRefresh?: boolean}`. Returns
+  `{ok, data: {removed: Entry[], remaining: number}}`.
+- **`pruneDuplicates(appidSet)`** in `background/queue-manager.js` — pure helper that takes a master appid
+  Set, removes matching queue entries, returns full snapshots for Undo.
+
+### Notes / caveats
+
+- If you have hand-edited `notes`, `genre`, `safe`, etc. on a queue entry and a collaborator pushes that
+  appid to master, auto-prune will discard your local edits along with the entry. The 8 s Undo covers
+  user-triggered prunes (Refresh Cache, manual button). For post-push prune (silent), the edits are gone
+  the moment the push succeeds. **Disable `auto_prune_queue` in Settings → Cache if this matters to your
+  workflow.**
+
+---
+
 ## [1.12.0] - 2026-04-19
 
 ### Added
@@ -554,8 +592,9 @@ git push origin vX.Y.Z   # workflow does the rest
 
 ### Planned / proposed
 
-- **v2.0.0 ribbon-cutting release** — Option A + Phase B tasks 1-5 all shipped (v1.7.0 - v1.12.0). v2.0.0
-  will be the relaunch marker, potentially folding in final polish items from the backlog below.
+- **v2.0.0 ribbon-cutting release** — Phase A + Phase B tasks 1-5 all shipped (v1.7.0 - v1.12.0) plus the
+  v1.13.0 queue-dedup improvement. v2.0.0 will be a pure version-bump + CHANGELOG narrative marking the
+  end of the UI refresh arc; no code changes.
 - Firefox (Manifest V3) support
 - Queue JSON export/import (backup / cross-browser migration)
 - GitHub health indicator in popup (surface recent rate-limit / auth errors)
@@ -581,4 +620,5 @@ git push origin vX.Y.Z   # workflow does the rest
 [1.10.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.9.0...v1.10.0
 [1.11.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.10.0...v1.11.0
 [1.12.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.11.0...v1.12.0
-[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.12.0...HEAD
+[1.13.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.12.0...v1.13.0
+[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.13.0...HEAD

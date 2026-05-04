@@ -315,3 +315,40 @@ export async function restoreEntries (entries) {
 
     return {ok: true, restored, skipped};
 }
+
+/**
+ * Remove queue entries whose appid is already present in the master data set.
+ *
+ * Called manually (Settings → Prune Duplicates Now) or automatically after
+ * cache refresh / successful push when settings.auto_prune_queue is true.
+ *
+ * Returns full entry snapshots in `removed` so the caller can offer Undo
+ * via restoreEntries().
+ *
+ * @param {Set<string>} appidSet - Known-master appids
+ * @returns {Promise<{ok: boolean, removed: object[], remaining: number}>}
+ */
+export async function pruneDuplicates (appidSet) {
+    if (!appidSet || appidSet.size === 0) {
+        return {ok: true, removed: [], remaining: 0};
+    }
+
+    const queue = await loadQueue ();
+    const removed = [];
+    const toKeep = [];
+
+    for (const entry of queue) {
+        const appid = extractAppId (entry.link);
+        if (appid && appidSet.has (appid)) removed.push (entry);
+        else toKeep.push (entry);
+    }
+
+    if (removed.length > 0) {
+        await saveQueue (toKeep);
+        await logInfo ("queue", `Pruned ${removed.length} duplicate(s) already in master data`, {
+            appids: removed.map ((e) => extractAppId (e.link)),
+        });
+    }
+
+    return {ok: true, removed, remaining: toKeep.length};
+}

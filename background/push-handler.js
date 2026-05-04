@@ -21,8 +21,30 @@ import {
     getFileContent, putFileContent, invalidatePath,
     getHeadCommit, createBlob, createTree, createSignedCommit, updateRef,
 } from "./github-api.js";
-import { refreshDedupCache } from "./dedup-checker.js";
+import { fetchRemoteAppIds, refreshDedupCache } from "./dedup-checker.js";
+import { pruneDuplicates } from "./queue-manager.js";
 import { signCommitPayload, buildCommitPayload, isSigningAvailable, getKeyMeta } from "./gpg-signer.js";
+
+/**
+ * After a successful push, force-refresh the dedup cache and (when enabled)
+ * prune queue entries whose appids landed on master while we weren't looking.
+ *
+ * Silent: errors logged at warn level, no toast — the user just saw the
+ * "Pushed N games" toast and we don't want to clobber that.
+ *
+ * @param {object} settings - Settings snapshot already loaded by the caller
+ */
+async function refreshCacheAndMaybePrune(settings) {
+    try {
+        await refreshDedupCache();
+        if (settings && settings.auto_prune_queue) {
+            const set = await fetchRemoteAppIds(false);
+            await pruneDuplicates(set);
+        }
+    } catch (err) {
+        await logWarn("dedup", `Post-push refresh/prune failed: ${err.message || err}`);
+    }
+}
 
 // ════════════════════════════════════════════════════════════
 // Entry serialization
@@ -328,7 +350,7 @@ export async function pushQueue(opts = {}) {
             if (result.ok) {
                 await saveQueue(toKeep);
                 await invalidatePath(REPO_TEMP_PATH);
-                refreshDedupCache().catch(() => {});
+                refreshCacheAndMaybePrune(settings).catch(() => {});
 
                 const signedLabel = result.signed ? " (GPG signed)" : "";
                 await logInfo("push", `Successfully pushed ${toPush.length} game(s)${signedLabel}`, {
@@ -415,7 +437,7 @@ export async function pushQueueUnsigned(opts = {}) {
         if (result.ok) {
             await saveQueue(toKeep);
             await invalidatePath(REPO_TEMP_PATH);
-            refreshDedupCache().catch(() => {});
+            refreshCacheAndMaybePrune(settings).catch(() => {});
 
             await logInfo("push", `Pushed ${toPush.length} game(s) unsigned`, {
                 commitSha: result.commitSha,
