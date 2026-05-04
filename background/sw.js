@@ -13,8 +13,8 @@ import {MSG} from "../shared/constants.js";
 import {loadQueue, loadSettings, saveSettings, storageClearAll, updateSettings} from "../shared/storage.js";
 import {clearLogs, exportLogsJSON, getLogs, logError, logInfo, logWarn} from "../shared/logger.js";
 import {extractAppId} from "../shared/utils.js";
-import {addToQueue, getQueueSize, removeFromQueue, restoreEntries, restoreEntry, updateEntry} from "./queue-manager.js";
-import {checkDuplicate, clearDedupCache, refreshDedupCache} from "./dedup-checker.js";
+import {addToQueue, getQueueSize, pruneDuplicates, removeFromQueue, restoreEntries, restoreEntry, updateEntry} from "./queue-manager.js";
+import {checkDuplicate, clearDedupCache, fetchRemoteAppIds, refreshDedupCache} from "./dedup-checker.js";
 import {pushQueue, pushQueueUnsigned} from "./push-handler.js";
 import {clearCache as clearGitHubCache} from "./github-api.js";
 import {getKeyMeta, importKey, removeKey, validateKey} from "./gpg-signer.js";
@@ -248,9 +248,31 @@ async function handleMessage(message, sender) {
             try {
                 clearGitHubCache();
                 const count = await refreshDedupCache();
-                return {ok: true, data: {appidCount: count}};
+
+                // Auto-prune queue against the freshly-fetched master set when enabled
+                let pruned = null;
+                const settings = await loadSettings();
+                if (settings.auto_prune_queue) {
+                    const set = await fetchRemoteAppIds(false); // hits the warm in-memory cache
+                    pruned = await pruneDuplicates(set);
+                    if (pruned.removed.length > 0) await updateBadge();
+                }
+
+                return {ok: true, data: {appidCount: count, pruned}};
             } catch (err) {
                 return {ok: false, error: err.message || "Cache refresh failed"};
+            }
+        }
+
+        // ── Prune queue duplicates against master data ──
+        case MSG.PRUNE_QUEUE_DUPLICATES: {
+            try {
+                const set = await fetchRemoteAppIds(!!data?.forceRefresh);
+                const result = await pruneDuplicates(set);
+                if (result.removed.length > 0) await updateBadge();
+                return {ok: true, data: result};
+            } catch (err) {
+                return {ok: false, error: err.message || "Prune failed"};
             }
         }
 

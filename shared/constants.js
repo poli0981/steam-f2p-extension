@@ -88,6 +88,7 @@ export const DEFAULT_SETTINGS = {
 
     // Cache
     cache_ttl_minutes: 5,
+    auto_prune_queue: true,
 
     // Logging
     log_level: "info",
@@ -123,4 +124,5 @@ export const MSG = {
     RESTORE_ENTRY:       "RESTORE_ENTRY",
     OPEN_EXTENSION_PAGE: "OPEN_EXTENSION_PAGE",
     UPDATE_SETTINGS:     "UPDATE_SETTINGS",
+    PRUNE_QUEUE_DUPLICATES: "PRUNE_QUEUE_DUPLICATES",
 };
