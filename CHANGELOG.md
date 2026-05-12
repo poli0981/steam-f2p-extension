@@ -7,6 +7,23 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.14.2] - 2026-05-12
+
+### Changed
+
+- **Release workflow** — bumped pinned actions to their Node 24 lines so the
+  workflow stops triggering GitHub's deprecation warning and keeps running
+  after the 2026-06-02 forced-Node 24 cutover (and the 2026-09-16 Node 20
+  removal):
+  - `actions/checkout@v4` → `@v6` (Node 24 since v5.0.0, released 2025-08-11)
+  - `softprops/action-gh-release@v2` → `@v3` (Node 24 as of v3.0.0, released
+    2026-04-12)
+
+No runtime changes. Extension code, UI, manifest permissions, and shipped
+ZIP contents are identical to v1.14.1 apart from the version string.
+
+---
+
 ## [1.14.1] - 2026-05-12
 
 ### Fixed
@@ -686,4 +703,5 @@ git push origin vX.Y.Z   # workflow does the rest
 [1.13.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.12.0...v1.13.0
 [1.14.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.13.0...v1.14.0
 [1.14.1]: https://github.com/poli0981/steam-f2p-extension/compare/v1.14.0...v1.14.1
-[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.14.1...HEAD
+[1.14.2]: https://github.com/poli0981/steam-f2p-extension/compare/v1.14.1...v1.14.2
+[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.14.2...HEAD
