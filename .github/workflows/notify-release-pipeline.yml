@@ -2,7 +2,13 @@ name: Notify Release Pipeline
 
 on:
   workflow_run:
-    workflows: ["*"]
+    # Narrowed from `["*"]` to release-related workflows. The previous wildcard
+    # caused the notifier to trigger on every workflow completion in the repo,
+    # most of which were irrelevant to the release pipeline and surfaced as
+    # "Skipped" entries in the Actions UI.
+    workflows:
+      - "Release"
+      - "Announce Release to Discord"
     types: [completed]
 
 permissions:

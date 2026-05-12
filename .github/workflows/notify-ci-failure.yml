@@ -2,7 +2,13 @@ name: Notify CI Failures
 
 on:
   workflow_run:
-    workflows: ["*"]
+    # Narrowed from `["*"]` to specific workflows whose failures we care about.
+    # `["*"]` caused the notifier to trigger on every workflow completion in the
+    # repo (incl. self-triggered runs) and produce many "Skipped" entries.
+    # Extend this list as new CI workflows are added (v2.5.0 PR validation, etc).
+    workflows:
+      - "Release"
+      - "Announce Release to Discord"
     types: [completed]
 
 # REQUIRED: declare permissions matching the reusable workflow's needs.

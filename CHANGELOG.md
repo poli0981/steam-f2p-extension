@@ -7,6 +7,51 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.14.0] - 2026-05-12
+
+### Added
+
+- **Settings → Connect with Developer** — new section linking to the maintainer's
+  X, YouTube, Discord (repo + game), Bluesky, Mastodon, Telegram, Steam profile,
+  and email.
+- **Settings → Support Development** — new section with GitHub Sponsors, Ko-fi,
+  Buy Me a Coffee, Patreon, and PayPal buttons. Mirrors the GitHub `FUNDING.yml`
+  the repo already shipped.
+- **Settings → Help & Feedback** — Report a Bug / Request a Feature buttons that
+  open the corresponding GitHub Issue templates pre-filled.
+- **Auto-create GitHub Discussion on release** — `softprops/action-gh-release@v2`
+  now receives `discussion_category_name: "Announcements"`, so every release tag
+  also opens a discussion thread. Requires Discussions to be enabled on the repo
+  with an `Announcements` category present (GitHub's default).
+- **Dependabot** — new `.github/dependabot.yml` scans `github-actions` weekly
+  (Mon 08:00 Asia/Ho_Chi_Minh). No other ecosystems apply (project is vanilla
+  JS, no `package.json`).
+- **Docs** — new `docs/pc_spec.md` (maintainer's dev machine) and
+  `docs/dev_env.md` (project-specific IDE + toolchain + workflow), plus
+  Vietnamese mirrors under `docs/i18n/vi/`.
+
+### Changed
+
+- **Notifier workflows narrowed** — `notify-ci-failure.yml` and
+  `notify-release-pipeline.yml` previously listened to
+  `workflow_run: workflows: ["*"]`, firing on every workflow completion and
+  spamming the Actions UI with "Skipped" runs. They now listen only to
+  `Release` and `Announce Release to Discord`.
+- **Release ZIP** — `release.yml` now also excludes `docs/pc_spec.md`,
+  `docs/dev_env.md`, and `docs/i18n/*` from the published archive. Legal docs
+  (`DISCLAIMER.md`, `PRIVACY_POLICY.md`, `TERMS_OF_USE.md`,
+  `THIRD_PARTY_NOTICES.md`) still ship as before.
+- **README** — added "Development & System Requirements" and "Support the
+  project" sections.
+
+### Settings layout
+
+The three new sections sit between **Logging** and **Danger Zone** so the
+destructive action stays at the bottom. Cards are addressable by anchor:
+`#about-section`, `#donate-section`, `#help-section`.
+
+---
+
 ## [1.13.0] - 2026-05-05
 
 ### Added
@@ -621,4 +666,5 @@ git push origin vX.Y.Z   # workflow does the rest
 [1.11.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.10.0...v1.11.0
 [1.12.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.11.0...v1.12.0
 [1.13.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.12.0...v1.13.0
-[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.13.0...HEAD
+[1.14.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.13.0...v1.14.0
+[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.14.0...HEAD
