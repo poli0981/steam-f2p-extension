@@ -7,6 +7,24 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.14.1] - 2026-05-12
+
+### Fixed
+
+- **Release workflow** — added `discussions: write` to the `permissions:` block
+  in `.github/workflows/release.yml`. Without it, the v1.14.0 release tag
+  successfully built and uploaded the ZIP but failed to auto-create the
+  GitHub Discussion (workflow error: `Discussion could not be created. Make
+  sure you passed a valid category name.`). The category name was fine; the
+  default `GITHUB_TOKEN` simply lacked the scope needed by the
+  `discussion_category_name` parameter on `softprops/action-gh-release@v2`.
+  Future tag pushes will now auto-create the Discussion as intended.
+
+No runtime changes. Extension code, UI, manifest permissions, and shipped
+ZIP contents are identical to v1.14.0 apart from the version string.
+
+---
+
 ## [1.14.0] - 2026-05-12
 
 ### Added
@@ -667,4 +685,5 @@ git push origin vX.Y.Z   # workflow does the rest
 [1.12.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.11.0...v1.12.0
 [1.13.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.12.0...v1.13.0
 [1.14.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.13.0...v1.14.0
-[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.14.0...HEAD
+[1.14.1]: https://github.com/poli0981/steam-f2p-extension/compare/v1.14.0...v1.14.1
+[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.14.1...HEAD

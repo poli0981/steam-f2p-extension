@@ -25,8 +25,15 @@ on:
       - 'v*.*.*'
 
 # Needed by softprops/action-gh-release to create the release.
+# `discussions: write` is required because we pass `discussion_category_name`
+# below — finalising the release with that field calls
+# `PATCH /repos/{owner}/{repo}/releases/{id}` and needs the extra scope on
+# `GITHUB_TOKEN`. Without it, the action errors with
+# "Discussion could not be created. Make sure you passed a valid category name."
+# even when the category is valid. (Hit on the v1.14.0 release.)
 permissions:
   contents: write
+  discussions: write
 
 jobs:
   release:
