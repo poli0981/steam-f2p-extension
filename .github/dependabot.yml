@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (c) 2026 poli0981 & contributor(s)
+#
+# Dependabot configuration for Steam F2P Tracker.
+#
+# Scope:
+#   - github-actions only. This project has no package.json (vanilla JS),
+#     no Cargo.toml, no Python requirements. The only versioned external
+#     dependencies are the actions referenced in .github/workflows/*.yml.
+#
+# Schedule: weekly on Monday 08:00 Asia/Ho_Chi_Minh.
+
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Asia/Ho_Chi_Minh"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"

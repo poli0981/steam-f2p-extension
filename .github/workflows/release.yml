@@ -57,7 +57,8 @@ jobs:
           zip -r "$ZIP_NAME" . \
             -x '.git/*' '.github/*' '.idea/*' '.claude/*' \
                 'CHANGELOG.md' 'CONTRIBUTING.md' 'CODE_OF_CONDUCT.md' \
-                'SECURITY.md' 'REQUIREMENTS.md'
+                'SECURITY.md' 'REQUIREMENTS.md' \
+                'docs/pc_spec.md' 'docs/dev_env.md' 'docs/i18n/*'
           echo "zip_name=$ZIP_NAME" >> "$GITHUB_OUTPUT"
           echo "---- ZIP contents ----"
           unzip -l "$ZIP_NAME"
@@ -67,3 +68,8 @@ jobs:
         with:
           files: ${{ steps.build.outputs.zip_name }}
           fail_on_unmatched_files: true
+          # Auto-create a Discussion thread for every release.
+          # Requires the repo to have Discussions enabled and an
+          # "Announcements" category (GitHub creates this by default
+          # when Discussions are first enabled).
+          discussion_category_name: "Announcements"

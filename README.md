@@ -356,6 +356,33 @@ description text against a dictionary of known patterns.
 
 ---
 
+## Development & System Requirements
+
+| Document                                                 | Description                                                  |
+|----------------------------------------------------------|--------------------------------------------------------------|
+| [PC Spec](docs/pc_spec.md)                               | Maintainer's development machine (hardware + global toolchain) |
+| [Dev Environment](docs/dev_env.md)                       | IDE, toolchain, and contribution workflow for this extension |
+| [PC Spec (VI)](docs/i18n/vi/pc_spec.md)                  | Vietnamese mirror                                            |
+| [Dev Environment (VI)](docs/i18n/vi/dev_env.md)          | Vietnamese mirror                                            |
+
+End-user runtime requirements are listed in [REQUIREMENTS.md](REQUIREMENTS.md).
+
+---
+
+## Support the project
+
+If this extension is useful to you and you'd like to support its development:
+
+- [GitHub Sponsors](https://github.com/sponsors/poli0981)
+- [Ko-fi](https://ko-fi.com/skullmute)
+- [Buy Me a Coffee](https://www.buymeacoffee.com/skullmute)
+- [Patreon](https://patreon.com/skullmute)
+- [PayPal](https://paypal.me/DungDang212)
+
+The same links are also available inside the extension under **Settings → Support Development**.
+
+---
+
 ## Legal & Policies
 
 | Document                                           | Description                                         |

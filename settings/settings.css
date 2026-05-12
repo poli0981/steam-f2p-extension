@@ -304,6 +304,34 @@ body {
 
 .log-msg { color : var(--text-primary); flex : 1; min-width : 0; word-break : break-word; }
 
+/* ── About / Donate / Help link grids ── */
+.link-grid {
+    display               : grid;
+    grid-template-columns : repeat(auto-fit, minmax(180px, 1fr));
+    gap                   : var(--space-sm);
+}
+
+.link-tile {
+    display         : inline-flex;
+    align-items     : center;
+    justify-content : flex-start;
+    gap             : var(--space-sm);
+    padding         : var(--space-sm) var(--space-md);
+    text-decoration : none;
+    text-align      : left;
+    white-space     : nowrap;
+    overflow        : hidden;
+}
+
+.link-tile span {
+    overflow      : hidden;
+    text-overflow : ellipsis;
+}
+
+.link-tile svg {
+    flex-shrink : 0;
+}
+
 /* ── Danger Zone ── */
 .danger-zone {
     border-color : rgba(231, 76, 60, 0.3);
