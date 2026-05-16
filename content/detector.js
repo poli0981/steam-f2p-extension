@@ -36,6 +36,36 @@
     const link = `https://store.steampowered.com/app/${appid}/`;
 
     /**
+     * Dispatch the auto-collect request to the service worker and, if it
+     * comes back with a non-silent toast directive, render the in-page
+     * toast. The sw is the single source of truth for whether
+     * auto-collect is enabled and which sub-toggles apply; the content
+     * script just renders the result. Fire-and-forget — never blocks
+     * the GAME_DETECTED flow.
+     *
+     * @param {object} gameData
+     * @param {{is_dlc?: boolean, is_demo?: boolean, is_playtest?: boolean, free_type?: string}} classification
+     */
+    function dispatchAutoCollect(gameData, classification) {
+        try {
+            chrome.runtime.sendMessage(
+                { type: "AUTO_ADD_FROM_PAGE", data: { gameData, classification } },
+                (resp) => {
+                    if (chrome.runtime.lastError) return;
+                    if (!resp || resp.silent || !resp.message) return;
+                    if (typeof SF2P.showInPageToast !== "function") return;
+                    SF2P.showInPageToast(resp.message, resp.toastType || "info", {
+                        link: resp.link,
+                    });
+                }
+            );
+        } catch {
+            // sendMessage can throw if the sw is restarting; the next
+            // detection (manual rescan or page reload) will retry.
+        }
+    }
+
+    /**
      * Run the full detection pipeline and send a GAME_DETECTED message.
      * Safe to call multiple times; idempotent besides the outbound message.
      */
@@ -65,6 +95,12 @@
                 { type: "GAME_DETECTED", data: gameData },
                 () => { if (chrome.runtime.lastError) return; }
             );
+            dispatchAutoCollect(gameData, {
+                is_dlc: dlcPage,
+                is_demo: demo,
+                is_playtest: playtest,
+                free_type: gameData.free_type,
+            });
             return;
         }
 
@@ -153,6 +189,12 @@
             { type: "GAME_DETECTED", data: gameData },
             () => { if (chrome.runtime.lastError) return; }
         );
+        dispatchAutoCollect(gameData, {
+            is_dlc: false,
+            is_demo: false,
+            is_playtest: false,
+            free_type: freeType,
+        });
     }
 
     // Expose for rescan

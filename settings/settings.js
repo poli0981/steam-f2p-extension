@@ -23,6 +23,9 @@ const FIELD_IDS = [
     "gpg_enabled",
     "auto_push_threshold", "commit_prefix",
     "cache_ttl_minutes", "auto_prune_queue",
+    "auto_collect",
+    "notify_added", "notify_not_free", "notify_dlc_demo", "notify_duplicate", "notify_queue_full",
+    "notify_lang",
     "log_level", "log_max_entries",
 ];
 

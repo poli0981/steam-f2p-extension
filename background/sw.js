@@ -9,7 +9,7 @@
  * MV3: All imports must be static (no dynamic import()).
  */
 
-import {MSG} from "../shared/constants.js";
+import {AUTO_COLLECT_COOLDOWN_MS, ERROR_CODE, MSG, SESSION_KEY_COOLDOWN_PREFIX} from "../shared/constants.js";
 import {loadQueue, loadSettings, saveSettings, storageClearAll, updateSettings} from "../shared/storage.js";
 import {clearLogs, exportLogsJSON, getLogs, logError, logInfo, logWarn} from "../shared/logger.js";
 import {extractAppId} from "../shared/utils.js";
@@ -18,6 +18,7 @@ import {checkDuplicate, clearDedupCache, fetchRemoteAppIds, refreshDedupCache} f
 import {pushQueue, pushQueueUnsigned} from "./push-handler.js";
 import {clearCache as clearGitHubCache} from "./github-api.js";
 import {getKeyMeta, importKey, removeKey, validateKey} from "./gpg-signer.js";
+import {getNotifyText, resolveNotifyLang} from "../shared/notification-text.js";
 
 // ── Installation ──
 
@@ -91,6 +92,35 @@ async function updateBadge() {
     const text = size > 0 ? String(size) : "";
     chrome.action.setBadgeText({text});
     chrome.action.setBadgeBackgroundColor({color: size >= 150 ? "#E74C3C" : "#66C0F4"});
+}
+
+// ── Auto-collect cooldown (v1.16.0) ──
+// chrome.storage.session is volatile; entries clear on browser restart,
+// which is the right TTL behaviour for "don't spam toasts on rapid
+// refresh within a single session". A nominal AUTO_COLLECT_COOLDOWN_MS
+// also lets the user re-trigger after a meaningful gap.
+
+async function isInAutoCollectCooldown(appid) {
+    if (!appid) return false;
+    const key = SESSION_KEY_COOLDOWN_PREFIX + appid;
+    try {
+        const r = await chrome.storage.session.get(key);
+        const ts = r[key];
+        return typeof ts === "number" && (Date.now() - ts) < AUTO_COLLECT_COOLDOWN_MS;
+    } catch {
+        return false;
+    }
+}
+
+async function markAutoCollectCooldown(appid) {
+    if (!appid) return;
+    try {
+        await chrome.storage.session.set({
+            [SESSION_KEY_COOLDOWN_PREFIX + appid]: Date.now(),
+        });
+    } catch (err) {
+        await logWarn("sw", `Auto-collect cooldown set failed for ${appid}: ${err.message || err}`);
+    }
 }
 
 // ── Auto-push check ──
@@ -274,6 +304,100 @@ async function handleMessage(message, sender) {
             } catch (err) {
                 return {ok: false, error: err.message || "Prune failed"};
             }
+        }
+
+        // ── Auto-collect from content script (v1.16.0) ──
+        // Called by detector.js after every page scan. Settings gate
+        // is checked here (not in the content script) so the toggle
+        // applies live without a content-script reload. Returns a
+        // structured `action` plus a pre-localized `message` for the
+        // in-page toast; `silent: true` tells the content script to
+        // skip the toast (cooldown, disabled, or sub-toggle off).
+        case MSG.AUTO_ADD_FROM_PAGE: {
+            const settings = await loadSettings();
+            if (!settings.auto_collect) {
+                return {ok: true, action: "disabled", silent: true};
+            }
+
+            const gameData = data?.gameData;
+            const cls = data?.classification || {};
+            if (!gameData || !gameData.appid) {
+                return {ok: false, error: "Missing gameData or appid"};
+            }
+
+            const appid = gameData.appid;
+            if (await isInAutoCollectCooldown(appid)) {
+                return {ok: true, action: "cooldown", silent: true};
+            }
+
+            const lang = resolveNotifyLang(settings.notify_lang);
+            const t = getNotifyText(lang);
+            const name = gameData.name || "";
+
+            // DLC / demo / playtest — never enqueue, optional toast.
+            if (cls.is_dlc) {
+                if (!settings.notify_dlc_demo) return {ok: true, action: "dlc", silent: true};
+                await markAutoCollectCooldown(appid);
+                return {ok: true, action: "dlc", message: t.dlc(name, appid), toastType: "info"};
+            }
+            if (cls.is_demo) {
+                if (!settings.notify_dlc_demo) return {ok: true, action: "demo", silent: true};
+                await markAutoCollectCooldown(appid);
+                return {ok: true, action: "demo", message: t.demo(name, appid), toastType: "info"};
+            }
+            if (cls.is_playtest) {
+                if (!settings.notify_dlc_demo) return {ok: true, action: "playtest", silent: true};
+                await markAutoCollectCooldown(appid);
+                return {ok: true, action: "playtest", message: t.playtest(name, appid), toastType: "info"};
+            }
+
+            // Paid — never enqueue, optional toast.
+            if (cls.free_type === "paid") {
+                if (!settings.notify_not_free) return {ok: true, action: "not_free", silent: true};
+                await markAutoCollectCooldown(appid);
+                return {ok: true, action: "not_free", message: t.notFree(name, appid), toastType: "warning"};
+            }
+
+            // Free — try to enqueue.
+            if (cls.free_type === "f2p" || cls.free_type === "free_game") {
+                const result = await addToQueue(gameData);
+                await updateBadge();
+
+                if (result.ok) {
+                    // Auto-push respects the user's existing threshold;
+                    // auto-collect does NOT bypass that knob.
+                    checkAutoPush();
+                    if (!settings.notify_added) return {ok: true, action: "added", silent: true};
+                    await markAutoCollectCooldown(appid);
+                    await logInfo("queue", `Auto-collected: ${name || appid}`, {appid});
+                    return {ok: true, action: "added", message: t.added(name, appid), toastType: "success"};
+                }
+
+                if (result.error_code === ERROR_CODE.QUEUE_FULL) {
+                    if (!settings.notify_queue_full) return {ok: true, action: "queue_full", silent: true};
+                    await markAutoCollectCooldown(appid);
+                    return {
+                        ok: true,
+                        action: "queue_full",
+                        message: t.queueFull(),
+                        toastType: "error",
+                        link: {label: t.openQueue, action: "open_queue"},
+                    };
+                }
+
+                if (result.error_code === ERROR_CODE.DUPLICATE) {
+                    if (!settings.notify_duplicate) return {ok: true, action: "duplicate", silent: true};
+                    await markAutoCollectCooldown(appid);
+                    return {ok: true, action: "duplicate", message: t.duplicate(name, appid), toastType: "info"};
+                }
+
+                // Any other unexpected failure — log and stay silent.
+                await logWarn("queue", `Auto-collect rejected: ${result.error || "unknown"}`, {appid});
+                return {ok: false, action: "rejected", silent: true, error: result.error};
+            }
+
+            // Unknown / indeterminate classification — stay silent.
+            return {ok: true, action: "unknown_type", silent: true};
         }
 
         // ── Settings ──

@@ -96,6 +96,38 @@ export const DEFAULT_SETTINGS = {
 
     // UI
     ui_theme: "system",   // "system" | "dark" | "light"
+
+    // Auto-collect (v1.16.0) — opt-in. When ON, the content script asks
+    // the service worker to auto-add the current page's game to the
+    // queue (if free, not duplicate, queue not full) and surface an
+    // in-page toast for every outcome the user opted in to.
+    auto_collect: false,
+    notify_added: true,
+    notify_not_free: true,
+    notify_dlc_demo: true,
+    notify_duplicate: true,
+    notify_queue_full: true,
+    notify_lang: "auto",  // "auto" | "en" | "vi"
+};
+
+// ── Auto-collect cooldown (v1.16.0) ──
+// Suppresses repeat toasts for the same appid during a browser session
+// (chrome.storage.session, volatile across restarts). 5 min covers
+// rapid refreshes / tab reopen without spam, while still letting the
+// user re-trigger after a meaningful gap.
+export const AUTO_COLLECT_COOLDOWN_MS = 5 * 60 * 1000;
+export const SESSION_KEY_COOLDOWN_PREFIX = "cooldown:autoadd:";
+
+// ── Error codes (v1.16.0) ──
+// Sit alongside the human-readable `error` string on rejection. The
+// in-page toast in the content script branches on these to pick the
+// right localized message; the popup still surfaces `error` directly.
+export const ERROR_CODE = {
+    INVALID_DATA: "INVALID_DATA",
+    INVALID_LINK: "INVALID_LINK",
+    NO_APPID:     "NO_APPID",
+    QUEUE_FULL:   "QUEUE_FULL",
+    DUPLICATE:    "DUPLICATE",
 };
 
 // ── Message types (content script ↔ service worker) ──
@@ -125,4 +157,5 @@ export const MSG = {
     OPEN_EXTENSION_PAGE: "OPEN_EXTENSION_PAGE",
     UPDATE_SETTINGS:     "UPDATE_SETTINGS",
     PRUNE_QUEUE_DUPLICATES: "PRUNE_QUEUE_DUPLICATES",
+    AUTO_ADD_FROM_PAGE:  "AUTO_ADD_FROM_PAGE",
 };

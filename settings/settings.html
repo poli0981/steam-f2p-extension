@@ -315,6 +315,69 @@
         </div>
     </section>
 
+    <!-- ── Auto-collect ── -->
+    <section class = "settings-section">
+        <h2 class = "section-heading">
+            <svg
+                    width = "18" height = "18" viewBox = "0 0 24 24" fill = "none" stroke = "currentColor"
+                    stroke-width = "2"
+                    stroke-linecap = "round"
+                    stroke-linejoin = "round"
+            >
+                <polygon points = "13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
+            Auto-collect
+            <span class = "badge badge-info" style = "margin-left:8px; font-size:10px">Opt-in</span>
+        </h2>
+        <div class = "toggle-row">
+            <label class = "toggle-label" for = "auto_collect">Enable auto-collect on Steam pages</label>
+            <label class = "toggle-switch">
+                <input type = "checkbox" id = "auto_collect">
+                <span class = "toggle-slider"></span>
+            </label>
+        </div>
+        <span class = "field-hint" style = "display:block; margin-top:6px;">
+            When on, every <code>store.steampowered.com/app/&lt;id&gt;</code> page is auto-scanned and added to the queue if it's a free game. A toast in the bottom-right corner reports the outcome. Manual <strong>Add to Queue</strong> still works as before.
+        </span>
+
+        <div class = "settings-grid" id = "autoCollectNotifyGrid" style = "margin-top:var(--space-md);">
+            <div class = "field-group">
+                <label class = "label">Notifications to show</label>
+                <label class = "label" style = "display:flex; align-items:center; gap:var(--space-sm); cursor:pointer; font-weight:400;">
+                    <input type = "checkbox" id = "notify_added">
+                    Game added to queue
+                </label>
+                <label class = "label" style = "display:flex; align-items:center; gap:var(--space-sm); cursor:pointer; font-weight:400;">
+                    <input type = "checkbox" id = "notify_not_free">
+                    Page is not a free game
+                </label>
+                <label class = "label" style = "display:flex; align-items:center; gap:var(--space-sm); cursor:pointer; font-weight:400;">
+                    <input type = "checkbox" id = "notify_dlc_demo">
+                    Page is DLC / demo / playtest
+                </label>
+                <label class = "label" style = "display:flex; align-items:center; gap:var(--space-sm); cursor:pointer; font-weight:400;">
+                    <input type = "checkbox" id = "notify_duplicate">
+                    Game already in queue
+                </label>
+                <label class = "label" style = "display:flex; align-items:center; gap:var(--space-sm); cursor:pointer; font-weight:400;">
+                    <input type = "checkbox" id = "notify_queue_full">
+                    Queue is full
+                </label>
+            </div>
+            <div class = "field-group">
+                <label class = "label" for = "notify_lang">Notification language</label>
+                <select class = "select" id = "notify_lang">
+                    <option value = "auto">Auto (browser language)</option>
+                    <option value = "en">English</option>
+                    <option value = "vi">Tiếng Việt</option>
+                </select>
+                <span class = "field-hint">
+                    Same appid notifies at most once per 5 minutes per browser session to avoid spam on rapid refreshes.
+                </span>
+            </div>
+        </div>
+    </section>
+
     <!-- ── Logging ── -->
     <section class = "settings-section">
         <h2 class = "section-heading">
