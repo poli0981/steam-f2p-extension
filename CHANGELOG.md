@@ -7,6 +7,50 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.16.1] - 2026-05-16
+
+### Fixed
+
+- **Auto-collect now checks the master database before enqueue.** When a
+  Steam page's appid is already present in the upstream tracker repo's
+  sharded `data_NNN.jsonl` files (discovered via `data/index.json`),
+  auto-collect now skips the enqueue and surfaces an
+  `... is already in the master database` toast (EN + VI). Previously the
+  entry would be added to the local queue and only dropped later by
+  `auto_prune_queue` after the next push, leaving transient noise in
+  the queue between collection and push.
+- The new check reuses the existing 5-minute dedup cache
+  (`fetchRemoteAppIds()` in `background/dedup-checker.js`) so warm
+  hits are an O(1) `Set` lookup. On a cold cache + network failure,
+  `checkDuplicate()` silently fails open and the auto-collect handler
+  falls through to the prior local-only behaviour — no toast, no
+  blocked enqueue.
+- Gated by the existing `notify_duplicate` setting toggle. When that
+  toggle is off, the action is still emitted (`master_duplicate`) for
+  telemetry but no toast is shown.
+- Logged at info level under the `dedup` category:
+  `Auto-collect skipped (in master): <appid>`.
+
+### Scope
+
+- **Auto-collect only** (`MSG.AUTO_ADD_FROM_PAGE` in `background/sw.js`).
+  The manual popup "Add to Queue" path is unchanged — it still uses
+  the separate `MSG.CHECK_DUPLICATE` flow it has had since v1.0.0.
+- The existing `result.error_code === ERROR_CODE.DUPLICATE` branch in
+  the auto-collect handler is **retained as a race-condition backstop**
+  in case another tab enqueues the same appid between the new
+  `checkDuplicate()` call and `addToQueue()`.
+
+### Notes
+
+- **No new manifest permissions.** Reuses the existing GitHub host
+  permission and the cache infrastructure that has shipped since
+  v1.2.0.
+- **No new setting.** The single `notify_duplicate` toggle now covers
+  both "already in queue" and "already in master database" toasts.
+
+---
+
 ## [1.16.0] - 2026-05-16
 
 ### Added
@@ -816,4 +860,5 @@ git push origin vX.Y.Z   # workflow does the rest
 [1.14.2]: https://github.com/poli0981/steam-f2p-extension/compare/v1.14.1...v1.14.2
 [1.15.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.14.2...v1.15.0
 [1.16.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.15.0...v1.16.0
-[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.16.0...HEAD
+[1.16.1]: https://github.com/poli0981/steam-f2p-extension/compare/v1.16.0...v1.16.1
+[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.16.1...HEAD
