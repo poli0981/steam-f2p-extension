@@ -7,6 +7,42 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.15.0] - 2026-05-16
+
+### Added
+
+- **Popup — Queue-full guard on the Add button** — when the local queue is at
+  `QUEUE_MAX` (150 entries) and the current Steam page would otherwise be
+  addable (free, not duplicate, not DLC/demo/playtest), the **Add to Queue**
+  button is disabled with a `Queue full (150/150)` label, and a hint appears
+  underneath: `Queue is full. Open Queue to prune.` The hint link opens the
+  Queue Manager via the existing singleton-tab helper.
+- **Live re-enable on prune** — the popup already listens to
+  `chrome.storage.onChanged` for queue size changes (since v1.5.0); the same
+  listener now drives the Add-button state, so if the user prunes the queue
+  in another tab while the popup is open, the button returns to its normal
+  **Add to Queue** state without requiring a popup reopen.
+
+### Why
+
+Before this change, the popup let users click **Add to Queue** even when the
+queue was full; the request reached the service worker, was rejected with
+`Queue is full (150/150)`, and surfaced as a generic error toast. The new
+guard makes the precondition visible up front, removes a wasted round-trip,
+and provides a one-click path to the Queue Manager where entries can be
+removed or pushed.
+
+### Notes
+
+- No new permissions, no new message types, no manifest changes beyond the
+  version bump. The guard reuses `MSG.GET_QUEUE_SIZE`, `QUEUE_MAX`, and
+  `MSG.OPEN_EXTENSION_PAGE` — all pre-existing.
+- The DLC / demo / playtest / paid / duplicate early-return branches in
+  `showDetectedGame()` keep their existing labels; the queue-full state only
+  applies to games that would otherwise be addable.
+
+---
+
 ## [1.14.2] - 2026-05-12
 
 ### Changed
@@ -704,4 +740,5 @@ git push origin vX.Y.Z   # workflow does the rest
 [1.14.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.13.0...v1.14.0
 [1.14.1]: https://github.com/poli0981/steam-f2p-extension/compare/v1.14.0...v1.14.1
 [1.14.2]: https://github.com/poli0981/steam-f2p-extension/compare/v1.14.1...v1.14.2
-[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.14.2...HEAD
+[1.15.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.14.2...v1.15.0
+[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.15.0...HEAD

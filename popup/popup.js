@@ -29,6 +29,15 @@ function requestOpenPage(path) {
     sendMessage(MSG.OPEN_EXTENSION_PAGE, { path });
 }
 
+// ── Module state ──
+// `lastQueueSize` and `currentGameAddable` together drive the queue-full
+// guard on the Add button. `isAdding` suppresses the guard during the
+// brief window between click and server response so the "Adding..."
+// spinner isn't overwritten by a storage-event re-render.
+let lastQueueSize = 0;
+let currentGameAddable = false;
+let isAdding = false;
+
 const versionEl = $("#version");
 const statusDot = $("#statusDot");
 const detectedLoading = $("#detectedLoading");
@@ -57,8 +66,11 @@ async function init() {
 
     const settings = await checkConnection();
     await checkFirstRun(settings);
-    await loadDetectedGame();
+    // Queue size must be primed before loadDetectedGame so the
+    // applyAddBtnState() call inside showDetectedGame() sees a real
+    // value instead of the default 0.
     await loadQueueStatus();
+    await loadDetectedGame();
     await loadActivity();
     bindEvents();
 
@@ -137,6 +149,11 @@ function showDetectedGame(game, dupData = {}) {
     detectedLoading.style.display = "none";
     detectedNone.style.display = "none";
     detectedContent.style.display = "block";
+
+    // Reset addability — only the "free, not duplicate" else branch below
+    // flips this true. All early-return branches (DLC/demo/playtest/paid/
+    // duplicate) keep it false, so the queue-full hint won't appear.
+    currentGameAddable = false;
 
     detectedThumb.src = game.header_image || "";
     detectedThumb.alt = game.name || "";
@@ -255,12 +272,36 @@ function showDetectedGame(game, dupData = {}) {
         addBtn.textContent = "Already Tracked";
     } else {
         detectedDuplicate.style.display = "none";
-        addBtn.disabled = false;
-        addBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add to Queue`;
+        currentGameAddable = true;
+        applyAddBtnState();
 
         if (dupData.warning) {
             appendBadge(detectedBadges, "Local check only", "warning");
         }
+    }
+}
+
+// Applies queue-full state to the Add button + hint. Only runs when the
+// detected game is in the "would be addable" state (currentGameAddable).
+// Suppressed during an in-flight add so the "Adding..." spinner isn't
+// clobbered by a storage-event re-render.
+function applyAddBtnState() {
+    const hint = $("#queueFullHint");
+    if (!hint || isAdding) return;
+
+    if (!currentGameAddable) {
+        hint.style.display = "none";
+        return;
+    }
+
+    if (lastQueueSize >= QUEUE_MAX) {
+        addBtn.disabled = true;
+        addBtn.textContent = `Queue full (${QUEUE_MAX}/${QUEUE_MAX})`;
+        hint.style.display = "block";
+    } else {
+        addBtn.disabled = false;
+        addBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add to Queue`;
+        hint.style.display = "none";
     }
 }
 
@@ -285,12 +326,14 @@ async function loadQueueStatus() {
 }
 
 function updateQueueUI(size) {
+    lastQueueSize = size;
     queueCount.textContent = size;
     const pct = (size / QUEUE_MAX) * 100;
     queueBar.style.width = `${pct}%`;
     queueBar.className = "queue-bar-fill" +
                          (pct >= 100 ? " full" : pct >= 80 ? " warning" : "");
     pushBtn.disabled = size === 0;
+    applyAddBtnState();
 }
 
 // ── Live queue-count sync ──
@@ -344,12 +387,15 @@ function bindEvents() {
             return;
         }
 
+        isAdding = true;
         addBtn.disabled = true;
         addBtn.innerHTML = `<span class="spinner"></span> Adding...`;
 
         const addResp = await sendMessage(MSG.ADD_TO_QUEUE, resp.data);
+        isAdding = false;
 
         if (addResp?.ok) {
+            currentGameAddable = false;
             addBtn.innerHTML = `✓ Added`;
             addBtn.classList.remove("btn-success");
             addBtn.classList.add("btn-ghost");
@@ -357,10 +403,15 @@ function bindEvents() {
             showToast(`Added: ${resp.data.name || "Game"}`, "success");
             await loadActivity();
         } else {
-            addBtn.disabled = false;
-            addBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add to Queue`;
+            applyAddBtnState();
             showToast(addResp?.error || "Failed to add", "error");
         }
+    });
+
+    $("#queueFullHintLink")?.addEventListener("click", (e) => {
+        e.preventDefault();
+        requestOpenPage("queue/queue.html");
+        window.close();
     });
 
     scanBtn?.addEventListener("click", async () => {
