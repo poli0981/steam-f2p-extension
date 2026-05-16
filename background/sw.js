@@ -360,6 +360,29 @@ async function handleMessage(message, sender) {
 
             // Free — try to enqueue.
             if (cls.free_type === "f2p" || cls.free_type === "free_game") {
+                // v1.16.1: also check the remote master DB (sharded data_NNN.jsonl
+                // discovered via data/index.json) before enqueue. Uses the existing
+                // 5-min dedup cache; checkDuplicate() silently fails open on remote
+                // fetch errors (returns isDuplicate:false with a warning field), so a
+                // cold cache + network failure falls through to the local-only path.
+                const dup = await checkDuplicate(appid);
+                if (dup.isDuplicate && dup.source === "queue") {
+                    if (!settings.notify_duplicate) return {ok: true, action: "duplicate", silent: true};
+                    await markAutoCollectCooldown(appid);
+                    return {ok: true, action: "duplicate", message: t.duplicate(name, appid), toastType: "info"};
+                }
+                if (dup.isDuplicate && dup.source === "remote") {
+                    await logInfo("dedup", `Auto-collect skipped (in master): ${appid}`, {appid});
+                    if (!settings.notify_duplicate) return {ok: true, action: "master_duplicate", silent: true};
+                    await markAutoCollectCooldown(appid);
+                    return {
+                        ok: true,
+                        action: "master_duplicate",
+                        message: t.masterDuplicate(name, appid),
+                        toastType: "info",
+                    };
+                }
+
                 const result = await addToQueue(gameData);
                 await updateBadge();
 
