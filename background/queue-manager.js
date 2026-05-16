@@ -14,7 +14,7 @@
  *     → type_game, anti_cheat, genre, notes, safe
  */
 
-import {QUEUE_MAX} from "../shared/constants.js";
+import {ERROR_CODE, QUEUE_MAX} from "../shared/constants.js";
 import {loadQueue, saveQueue} from "../shared/storage.js";
 import {extractAppId, makeQueueEntry} from "../shared/utils.js";
 import {logInfo, logWarn} from "../shared/logger.js";
@@ -42,7 +42,7 @@ const EDITABLE_FIELD_KEYS = new Set ([
  */
 export async function addToQueue (gameData) {
     if (!gameData || !gameData.link) {
-        return {ok: false, error: "No game data or link provided"};
+        return {ok: false, error_code: ERROR_CODE.INVALID_DATA, error: "No game data or link provided"};
     }
 
     const queue = await loadQueue ();
@@ -52,6 +52,7 @@ export async function addToQueue (gameData) {
         await logWarn ("queue", `Queue full (${QUEUE_MAX}/${QUEUE_MAX}). Push or remove entries.`);
         return {
             ok: false,
+            error_code: ERROR_CODE.QUEUE_FULL,
             error: `Queue is full (${QUEUE_MAX}/${QUEUE_MAX}). Push or remove entries first.`,
         };
     }
@@ -59,18 +60,18 @@ export async function addToQueue (gameData) {
     // Build base entry from detected data (includes all auto + editable fields)
     const entry = makeQueueEntry (gameData);
     if (!entry.link) {
-        return {ok: false, error: "Invalid link format"};
+        return {ok: false, error_code: ERROR_CODE.INVALID_LINK, error: "Invalid link format"};
     }
 
     const appid = extractAppId (entry.link);
     if (!appid) {
-        return {ok: false, error: "Could not extract appid from link"};
+        return {ok: false, error_code: ERROR_CODE.NO_APPID, error: "Could not extract appid from link"};
     }
 
     // Local duplicate check
     const exists = queue.some ((g) => extractAppId (g.link) === appid);
     if (exists) {
-        return {ok: false, error: "Game already in queue"};
+        return {ok: false, error_code: ERROR_CODE.DUPLICATE, error: "Game already in queue"};
     }
 
     // ── Auto-detect enrichments from gameData ──

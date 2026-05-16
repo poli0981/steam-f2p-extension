@@ -7,6 +7,80 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.16.0] - 2026-05-16
+
+### Added
+
+- **Auto-collect on Steam pages (opt-in)** — new **Settings → Auto-collect**
+  section with a master toggle (default OFF). When enabled, the content
+  script on `store.steampowered.com/app/*` reports detection results to
+  the service worker, which auto-adds free games to the queue and
+  surfaces an in-page toast in the bottom-right corner of the browser
+  for every outcome:
+  - Free game added → `Game [name] with id [id] added`
+  - Page is not free → `Game [name] with id [id] is not free`
+  - Page is DLC / demo / playtest → `This page is DLC` (etc.)
+  - Game already in queue → `[name] is already in the queue`
+  - Queue is full → `Queue is full (150/150)` with an **Open queue** link
+    that opens the singleton Queue tab via the existing
+    `MSG.OPEN_EXTENSION_PAGE` helper
+
+- **Per-event notification toggles** — five sub-toggles under the master
+  switch (default all ON) let the user silence any subset of toast
+  categories (`notify_added`, `notify_not_free`, `notify_dlc_demo`,
+  `notify_duplicate`, `notify_queue_full`).
+
+- **Bilingual notifications** — new `notify_lang` setting (Auto / English
+  / Tiếng Việt). `Auto` resolves to `vi` when the service worker's
+  `navigator.language` starts with `vi`, otherwise `en`.
+
+- **In-page toast renderer** — new `content/in-page-toast.js`. Uses a
+  Shadow DOM host attached to `document.documentElement` (NOT body —
+  Steam mutates body subtrees during in-page navigation). Inline CSS
+  inside the shadow root + `z-index: 2147483647` keep Steam's global
+  styles from clobbering the toast.
+
+- **5-minute per-appid cooldown** — auto-collect notifications are
+  deduped via `chrome.storage.session` so rapid refreshes / tab
+  re-opens of the same Steam page don't spam toasts. Volatile across
+  browser restarts.
+
+- **Structured error codes** — `addToQueue()` now returns an
+  `error_code` field alongside the human-readable `error` string
+  (`QUEUE_FULL`, `DUPLICATE`, `INVALID_DATA`, `INVALID_LINK`,
+  `NO_APPID`). The popup still surfaces `error` as before; the new
+  auto-collect handler branches on `error_code` to pick the right
+  localized toast.
+
+### Why
+
+The detector already ran on every `store.steampowered.com/app/*` page;
+users had to click **Add to Queue** in the popup to actually enqueue.
+Auto-collect closes that loop without losing the manual path — the
+existing popup button still works identically (including the
+v1.15.0 queue-full guard). The feature is opt-in because automatic
+data-collection on every Steam page is intrusive by default; users
+can flip it on once they've reviewed the new Settings section.
+
+### Notes
+
+- **No new manifest permissions.** The feature reuses `storage`
+  (already present, including the `chrome.storage.session` sub-API)
+  and `activeTab`. No `notifications`, no `tabs`.
+- **Auto-collect does NOT bypass `auto_push_threshold`.** Push still
+  triggers only when the queue size crosses the threshold the user
+  configured. Auto-collect just feeds entries in; the existing push
+  pipeline is unchanged.
+- **Service worker is the single source of truth** for the auto-collect
+  gate and language selection. Flipping the master toggle or any
+  sub-toggle takes effect on the next page scan — no content-script
+  reload required.
+- New content script `content/in-page-toast.js` is listed third in
+  `manifest.content_scripts.js` (after `ns.js` and `lib-dom.js`,
+  before the extractors).
+
+---
+
 ## [1.15.0] - 2026-05-16
 
 ### Added
@@ -741,4 +815,5 @@ git push origin vX.Y.Z   # workflow does the rest
 [1.14.1]: https://github.com/poli0981/steam-f2p-extension/compare/v1.14.0...v1.14.1
 [1.14.2]: https://github.com/poli0981/steam-f2p-extension/compare/v1.14.1...v1.14.2
 [1.15.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.14.2...v1.15.0
-[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.15.0...HEAD
+[1.16.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.15.0...v1.16.0
+[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.16.0...HEAD
