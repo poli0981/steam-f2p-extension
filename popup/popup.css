@@ -123,6 +123,24 @@ body {
     padding    : var(--space-sm) 0;
 }
 
+/* Shown only when the detected game would otherwise be addable but the
+   queue is at QUEUE_MAX. Lives directly under .detected-actions. */
+.queue-full-hint {
+    margin-top : var(--space-xs);
+    text-align : center;
+    line-height: 1.4;
+}
+
+.queue-full-hint a {
+    color           : var(--accent);
+    text-decoration : underline;
+    margin-left     : 4px;
+}
+
+.queue-full-hint a:hover {
+    color : var(--accent-hover);
+}
+
 /* Loading state now hosts a skeleton preview — keep original padding
    cadence but no forced text-centering (the skeleton layout is a row). */
 .detected-loading {
