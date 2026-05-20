@@ -7,6 +7,45 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.0.0] - 2026-05-20
+
+Milestone release marking the end of the 1.x line. **No functional
+changes** — `2.0.0` is a version bump that closes out the UI/UX
+modernization arc spanning v1.7.0 through v1.17.2. Every item below
+already shipped under the version noted; this entry is a narrative
+summary, not new work.
+
+### Changed
+
+- `manifest.json` version bumped to `2.0.0`. No JavaScript, HTML, or
+  CSS behaviour changed in this release.
+
+### The 1.x → 2.0 journey
+
+- **Visual refresh** (v1.7.0) — WCAG-AA colour palette, bundled Inter
+  Variable typeface, layered shadows and `backdrop-filter`, hover
+  micro-interactions, automatic light-mode variant.
+- **Structural UI overhaul** (v1.8.0 – v1.12.0) — focus-trapped themed
+  modal dialog, Info/Edit tablist on queue cards, skeleton loaders, an
+  in-app System / Light / Dark theme toggle, and a stacked toast
+  system with undo-progress bars.
+- **Smarter queue** (v1.13.0, v1.15.0) — auto-prune against the
+  upstream master data, and a popup queue-full guard at the 150-entry
+  cap.
+- **Release & CI hardening** (v1.14.0 – v1.14.2) — tag-driven release
+  automation, auto-created announcement Discussions, Dependabot, and
+  bilingual developer docs.
+- **Opt-in auto-collect** (v1.16.0 – v1.16.2) — the content script can
+  auto-queue free games with localized in-page toasts; later hardened
+  with master-database dedup and a guard that skips delisted games.
+- **Final polish** (v1.17.0 – v1.17.2) — a scroll-to-top button on the
+  long pages, plus `knip` dead-code tooling and the cleanup it
+  surfaced.
+
+Full detail for each item is in its version's entry below.
+
+---
+
 ## [1.17.2] - 2026-05-20
 
 ### Changed
@@ -950,4 +989,5 @@ git push origin vX.Y.Z   # workflow does the rest
 [1.17.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.16.2...v1.17.0
 [1.17.1]: https://github.com/poli0981/steam-f2p-extension/compare/v1.17.0...v1.17.1
 [1.17.2]: https://github.com/poli0981/steam-f2p-extension/compare/v1.17.1...v1.17.2
-[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.17.2...HEAD
+[2.0.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.17.2...v2.0.0
+[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v2.0.0...HEAD

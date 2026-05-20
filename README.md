@@ -25,6 +25,20 @@ validates, and catalogs the games automatically via GitHub Actions.
 
 ---
 
+## What's New in 2.0
+
+Version 2.0 closes out a long modernization arc. Highlights since the early 1.x releases:
+
+- **In-app theme toggle** — System / Light / Dark, on a WCAG-AA contrast-tuned palette with a bundled Inter Variable typeface
+- **Modernized UI** — focus-trapped themed dialogs, Info/Edit tabs on queue cards, skeleton loaders, and stacked toasts with undo-progress
+- **Opt-in auto-collect** — automatically queue free games as you browse, with localized in-page toasts (English / Vietnamese)
+- **Smarter queue** — auto-prune against the upstream tracker data, a queue-full guard, and delisted games skipped automatically
+- **Scroll-to-top button** on the long Settings and Queue pages
+
+`2.0.0` itself is a version-bump milestone — no functional changes. See the [changelog](CHANGELOG.md) for the full history.
+
+---
+
 ## Features
 
 ### Detection
