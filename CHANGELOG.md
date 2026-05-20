@@ -7,6 +7,34 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.17.1] - 2026-05-20
+
+### Changed
+
+- **Added `knip` as a dev-only dead-code checker.** A minimal
+  `package.json` + `knip.json` let `npm install && npm run knip` flag
+  unused files and exports across the ES-module graph (service worker,
+  `shared/`, the three UI pages). The extension still ships **zero
+  runtime dependencies** — `knip` is a `devDependency`, and
+  `package.json` / `package-lock.json` / `knip.json` are excluded from
+  the published release ZIP.
+
+### Removed
+
+- Dead code found by the knip audit:
+  - `sanitize()` in `shared/utils.js` — exported but never called.
+  - The `export` keyword on `normalizeLink()` (`shared/utils.js`) and
+    `log()` (`shared/logger.js`) — each is used only inside its own
+    module, so both are now plain internal functions.
+
+### Notes
+
+- knip analyses the ES-module graph only; the `content/` scripts are
+  IIFEs sharing `globalThis.SF2P` and are listed as knip entry points
+  so they are not mis-reported as unused.
+
+---
+
 ## [1.17.0] - 2026-05-20
 
 ### Added
@@ -908,4 +936,5 @@ git push origin vX.Y.Z   # workflow does the rest
 [1.16.1]: https://github.com/poli0981/steam-f2p-extension/compare/v1.16.0...v1.16.1
 [1.16.2]: https://github.com/poli0981/steam-f2p-extension/compare/v1.16.1...v1.16.2
 [1.17.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.16.2...v1.17.0
-[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.17.0...HEAD
+[1.17.1]: https://github.com/poli0981/steam-f2p-extension/compare/v1.17.0...v1.17.1
+[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.17.1...HEAD

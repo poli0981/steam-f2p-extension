@@ -1,0 +1,14 @@
+{
+  "name": "steam-f2p-extension",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Dev tooling manifest for the Steam F2P Tracker browser extension. The extension ships zero runtime dependencies; this file exists only so the knip dead-code checker can run.",
+  "license": "GPL-3.0-only",
+  "scripts": {
+    "knip": "knip"
+  },
+  "devDependencies": {
+    "knip": "^5"
+  }
+}
