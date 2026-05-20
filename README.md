@@ -31,6 +31,7 @@ validates, and catalogs the games automatically via GitHub Actions.
 
 - **Price detection** via schema.org structured data with DOM fallback — base game price only, bundles excluded
 - **Free type classification**: `Free to Play` (monetized), `Free Game` (fully free), `Demo`, `Playtest`, `Paid`
+- **Delisted detection** — pages showing Steam's "no longer available" notice are skipped, never queued
 - **DLC detection** — paid DLC identified separately from base game via `#gameAreaDLCSection`
 - **Online/Offline** auto-detection from Steam multiplayer/MMO/co-op categories
 - **Anti-cheat** two-pass detection: Steam structured `.anticheat_section` (primary) + dictionary pattern scan (
@@ -124,7 +125,7 @@ validates, and catalogs the games automatically via GitHub Actions.
 
 1. Browse to any Steam store game page
 2. Click the extension icon — the popup shows detected game info with classification badges
-3. Click **Add to Queue** (disabled for paid games, demos, playtests, and DLC pages)
+3. Click **Add to Queue** (disabled for paid games, demos, playtests, DLC pages, and delisted games)
 4. Repeat for more games
 5. Click **Push** to send all queued games to your GitHub repository
 

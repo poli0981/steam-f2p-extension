@@ -351,6 +351,15 @@ async function handleMessage(message, sender) {
                 return {ok: true, action: "playtest", message: t.playtest(name, appid), toastType: "info"};
             }
 
+            // Delisted / no longer available on the Steam store — never
+            // enqueue. Gated by the same notify_dlc_demo toggle as the
+            // other "this page isn't queueable" outcomes.
+            if (cls.is_unavailable) {
+                if (!settings.notify_dlc_demo) return {ok: true, action: "unavailable", silent: true};
+                await markAutoCollectCooldown(appid);
+                return {ok: true, action: "unavailable", message: t.unavailable(name, appid), toastType: "warning"};
+            }
+
             // Paid — never enqueue, optional toast.
             if (cls.free_type === "paid") {
                 if (!settings.notify_not_free) return {ok: true, action: "not_free", silent: true};

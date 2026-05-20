@@ -203,6 +203,14 @@ function showDetectedGame(game, dupData = {}) {
     detectedBadges.innerHTML = "";
 
     // ── Blocked types ──
+    if (game.is_unavailable) {
+        appendBadge(detectedBadges, "Not available", "error");
+        addBtn.disabled = true;
+        addBtn.textContent = "Not Available — Ignored";
+        detectedDuplicate.style.display = "none";
+        return;
+    }
+
     if (game.is_dlc) {
         appendBadge(detectedBadges, "DLC (ignored)", "warning");
         addBtn.disabled = true;

@@ -74,9 +74,10 @@
         const dlcPage = SF2P.isDLCPage();
         const demo = SF2P.isDemo();
         const playtest = SF2P.isPlaytest();
+        const unavailable = SF2P.isUnavailable();
 
-        // ── Fast path: DLC / Demo / Playtest ──
-        if (dlcPage || demo || playtest) {
+        // ── Fast path: DLC / Demo / Playtest / delisted ──
+        if (dlcPage || demo || playtest || unavailable) {
             const gameData = {
                 link,
                 appid,
@@ -87,6 +88,7 @@
                 is_dlc: dlcPage,
                 is_demo: demo,
                 is_playtest: playtest,
+                is_unavailable: unavailable,
                 free_type: demo ? "demo" : playtest ? "playtest" : "",
                 is_free: null,
             };
@@ -99,6 +101,7 @@
                 is_dlc: dlcPage,
                 is_demo: demo,
                 is_playtest: playtest,
+                is_unavailable: unavailable,
                 free_type: gameData.free_type,
             });
             return;
@@ -165,6 +168,7 @@
             is_dlc: false,
             is_demo: false,
             is_playtest: false,
+            is_unavailable: false,
             free_type: freeType,
             has_paid_dlc: hasPaidDLC,
             price: basePrice,
@@ -193,6 +197,7 @@
             is_dlc: false,
             is_demo: false,
             is_playtest: false,
+            is_unavailable: false,
             free_type: freeType,
         });
     }
