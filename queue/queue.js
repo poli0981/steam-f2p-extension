@@ -15,9 +15,11 @@ import { debounce, extractAppId, formatTime, truncate } from "../shared/utils.js
 import { $, sendMessage, showToast, showUndoToast } from "../shared/ui-helpers.js";
 import { confirmDialog } from "../shared/modal.js";
 import { initThemeSync } from "../shared/theme-applier.js";
+import { initScrollToTop } from "../shared/scroll-to-top.js";
 
 // Apply persisted ui_theme as early as possible
 initThemeSync();
+initScrollToTop();
 
 // ── DOM refs ──
 const queueCountEl = $("#queueCount");

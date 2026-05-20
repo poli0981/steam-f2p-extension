@@ -7,6 +7,26 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.17.0] - 2026-05-20
+
+### Added
+
+- **Scroll-to-top button on the Settings and Queue pages.** A small
+  floating button appears in the bottom-right corner once the page is
+  scrolled past ~320 px; clicking it returns to the top. The scroll is
+  smooth, or instant when the OS "reduce motion" preference is set.
+- Implemented as a shared `shared/scroll-to-top.js` module that both
+  pages inject at init — no HTML changes; styling via a new
+  `.scroll-top-btn` rule in `shared/theme.css`.
+
+### Notes
+
+- The button shares the bottom-right corner with the toast stack
+  (z-index 9999); a transient toast briefly renders above the button
+  (z-index 50), which is expected.
+
+---
+
 ## [1.16.2] - 2026-05-20
 
 ### Fixed
@@ -887,4 +907,5 @@ git push origin vX.Y.Z   # workflow does the rest
 [1.16.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.15.0...v1.16.0
 [1.16.1]: https://github.com/poli0981/steam-f2p-extension/compare/v1.16.0...v1.16.1
 [1.16.2]: https://github.com/poli0981/steam-f2p-extension/compare/v1.16.1...v1.16.2
-[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.16.2...HEAD
+[1.17.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.16.2...v1.17.0
+[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.17.0...HEAD

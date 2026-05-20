@@ -466,6 +466,53 @@ a:hover {
     to { opacity : 0; transform : translateY(12px) scale(0.95); }
 }
 
+/* ── Scroll-to-top button (Settings / Queue pages) ── */
+/* Shares the bottom-right corner with .toast-container (z-index 9999);
+   a transient toast briefly renders above this button — expected. */
+.scroll-top-btn {
+    position        : fixed;
+    bottom          : var(--space-lg);
+    right           : var(--space-lg);
+    z-index         : 50;
+    width           : 40px;
+    height          : 40px;
+    display         : flex;
+    align-items     : center;
+    justify-content : center;
+    border          : none;
+    border-radius   : 50%;
+    background      : var(--accent);
+    color           : var(--accent-contrast);
+    cursor          : pointer;
+    box-shadow      : var(--shadow-md);
+    opacity         : 0;
+    transform       : translateY(8px);
+    pointer-events  : none;
+    transition      : opacity var(--transition-fast),
+                      transform var(--transition-fast),
+                      background var(--transition-fast);
+}
+
+.scroll-top-btn.visible {
+    opacity        : 1;
+    transform      : translateY(0);
+    pointer-events : auto;
+}
+
+.scroll-top-btn:hover {
+    background : var(--accent-hover);
+    transform  : translateY(-2px);
+}
+
+.scroll-top-btn:active {
+    transform : translateY(0);
+}
+
+.scroll-top-btn:focus-visible {
+    outline        : 2px solid var(--border-focus);
+    outline-offset : 2px;
+}
+
 /* ── Fade-in animation for sections ── */
 .fade-in {
     animation : fade-in 0.25s ease forwards;
