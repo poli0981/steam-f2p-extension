@@ -29,7 +29,7 @@ function shouldLog(level, minLevel) {
  * @param {string} message - Human-readable message
  * @param {object} [data] - Optional structured data
  */
-export async function log(level, category, message, data = undefined) {
+async function log(level, category, message, data = undefined) {
     try {
         const settings = await loadSettings();
         const minLevel = settings.log_level || "info";

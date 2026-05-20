@@ -63,6 +63,7 @@ jobs:
           ZIP_NAME="steam-f2p-tracker-v${{ steps.version.outputs.version }}.zip"
           zip -r "$ZIP_NAME" . \
             -x '.git/*' '.github/*' '.idea/*' '.claude/*' \
+                'node_modules/*' 'package.json' 'package-lock.json' 'knip.json' \
                 'CHANGELOG.md' 'CONTRIBUTING.md' 'CODE_OF_CONDUCT.md' \
                 'SECURITY.md' 'REQUIREMENTS.md' \
                 'docs/pc_spec.md' 'docs/dev_env.md' 'docs/i18n/*'

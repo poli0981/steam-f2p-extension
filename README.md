@@ -5,7 +5,7 @@
 
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL%203.0-blue.svg)](LICENSE)
 [![Chrome MV3](https://img.shields.io/badge/Chrome-Manifest%20V3-brightgreen.svg)](#installation)
-[![No Dependencies](https://img.shields.io/badge/Dependencies-0%20npm-orange.svg)](#architecture)
+[![Runtime deps: 0](https://img.shields.io/badge/Runtime%20deps-0-orange.svg)](#architecture)
 
 ---
 
@@ -224,7 +224,7 @@ Multi-developer example:
 ## Architecture
 
 ```
-steam-f2p-extension/          33 runtime files · 0 npm dependencies
+steam-f2p-extension/          34 runtime files · 0 runtime dependencies
 ├── manifest.json             Extension config (MV3, ES modules)
 ├── background/               Service worker modules
 │   ├── sw.js                 Entry point & message router
@@ -420,5 +420,5 @@ information extracted may not be 100% accurate. See [DISCLAIMER.md](docs/DISCLAI
 ---
 
 <p align="center">
-  <sub>Built with vanilla JS · Zero dependencies · Made for the community</sub>
+  <sub>Built with vanilla JS · Zero runtime dependencies · Made for the community</sub>
 </p>

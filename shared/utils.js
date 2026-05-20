@@ -23,10 +23,11 @@ export function extractAppId(link) {
 /**
  * Normalize a Steam link to canonical form.
  * Accepts: full URL, short URL, bare appid.
+ * Internal helper for makeQueueEntry().
  * @param {string} raw
  * @returns {string|null} Canonical URL or null
  */
-export function normalizeLink(raw) {
+function normalizeLink(raw) {
     if (!raw) return null;
     raw = raw.trim().replace(/\/+$/, "");
 
@@ -75,18 +76,6 @@ export function formatTime(iso) {
 export function truncate(str, max = 50) {
     if (!str || str.length <= max) return str || "";
     return str.slice(0, max - 3) + "...";
-}
-
-/**
- * Sanitize a string for safe DOM insertion.
- * @param {string} str
- * @returns {string}
- */
-export function sanitize(str) {
-    if (!str) return "";
-    const div = document.createElement("div");
-    div.textContent = str;
-    return div.innerHTML;
 }
 
 /**
