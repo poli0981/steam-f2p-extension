@@ -7,6 +7,31 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.16.2] - 2026-05-20
+
+### Fixed
+
+- **Delisted games are no longer auto-collected.** When a Steam store
+  page shows the "no longer available on the Steam store" notice
+  (`#purchase_note`), the extension now treats it as a non-queueable
+  page type — reusing the same fast path already used for DLC / demo /
+  playtest. Previously such a page had no price element, fell back to
+  its still-present "Free to Play" tag, was classified `f2p`, and was
+  added to the queue by auto-collect.
+- The popup "Add to Queue" button is now also disabled on a delisted
+  page (badge: *Not available*), so the manual add path is covered too.
+
+### Notes
+
+- A new `unavailable` auto-collect outcome surfaces an in-page toast
+  (EN + VI), gated by the existing `notify_dlc_demo` toggle — **no new
+  setting** and **no new manifest permissions**.
+- Detection matches the English notice text ("no longer available"),
+  consistent with the extension's other English-based page scraping; a
+  non-English Steam store locale would not be recognised.
+
+---
+
 ## [1.16.1] - 2026-05-16
 
 ### Fixed
@@ -861,4 +886,5 @@ git push origin vX.Y.Z   # workflow does the rest
 [1.15.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.14.2...v1.15.0
 [1.16.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.15.0...v1.16.0
 [1.16.1]: https://github.com/poli0981/steam-f2p-extension/compare/v1.16.0...v1.16.1
-[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.16.1...HEAD
+[1.16.2]: https://github.com/poli0981/steam-f2p-extension/compare/v1.16.1...v1.16.2
+[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.16.2...HEAD

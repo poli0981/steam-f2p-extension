@@ -82,4 +82,15 @@
 
         return false;
     };
+
+    /**
+     * Is this game delisted / no longer purchasable?
+     * Steam renders a #purchase_note notice on removed titles, e.g.
+     * "NAME is no longer available on the Steam store."
+     */
+    ns.isUnavailable = function () {
+        const note = document.querySelector("#purchase_note");
+        if (!note) return false;
+        return note.textContent.toLowerCase().includes("no longer available");
+    };
 })();
