@@ -54,7 +54,24 @@ LGPL-3.0:
 
 ---
 
-## No Other Dependencies
+## knip (development tooling — not distributed)
 
-The Extension is built with vanilla JavaScript (ES2022+) and CSS custom properties. It has **no npm dependencies**, no
-build step, and no other bundled third-party libraries beyond openpgp.js listed above.
+- **Location:** Not bundled. Declared as a `devDependency` in `package.json`; installed into `node_modules/` for local
+  development only.
+- **Version:** 5.x
+- **License:** ISC
+- **Repository:** [webpro-nl/knip](https://github.com/webpro-nl/knip)
+- **Usage:** Dead-code analysis during development, run via `npm run knip`. knip scans for unused files and exports; it
+  does not modify or contribute any code to the Extension.
+- **Note:** **Not part of the published extension.** `package.json`, `package-lock.json`, `knip.json`, and
+  `node_modules/` are excluded from the release ZIP build.
+
+---
+
+## No Other Runtime Dependencies
+
+The Extension is built with vanilla JavaScript (ES2022+) and CSS custom properties. It bundles **no runtime npm
+dependencies**, has no build step, and ships no third-party libraries beyond openpgp.js listed above.
+
+The only npm package used in this repository is `knip` (above) — a development-only dead-code checker that is **not
+distributed** with the Extension.

@@ -7,6 +7,18 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.17.2] - 2026-05-20
+
+### Changed
+
+- **`docs/THIRD_PARTY_NOTICES.md` now documents `knip`.** The
+  development-only dead-code checker added in v1.17.1 gets its own
+  ISC-licensed entry, and the closing section is reworded to
+  "No Other Runtime Dependencies" to make explicit that `knip` is a
+  `devDependency` and is not distributed with the extension.
+
+---
+
 ## [1.17.1] - 2026-05-20
 
 ### Changed
@@ -937,4 +949,5 @@ git push origin vX.Y.Z   # workflow does the rest
 [1.16.2]: https://github.com/poli0981/steam-f2p-extension/compare/v1.16.1...v1.16.2
 [1.17.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.16.2...v1.17.0
 [1.17.1]: https://github.com/poli0981/steam-f2p-extension/compare/v1.17.0...v1.17.1
-[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.17.1...HEAD
+[1.17.2]: https://github.com/poli0981/steam-f2p-extension/compare/v1.17.1...v1.17.2
+[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v1.17.2...HEAD
