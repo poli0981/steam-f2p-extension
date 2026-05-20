@@ -152,6 +152,7 @@ Open from popup → **Queue** button. Full-page management with:
 - **▾ Edit fields** — collapsible editable panel: genre (tag-select dropdown), type, anti-cheat, notes, safety
 - Search bar to filter by name, genre, developer, publisher, or tags
 - **Push All** / **Clear All** actions
+- **Scroll-to-top button** — appears in the bottom-right corner once you scroll down a long queue
 - Keyboard: `Ctrl+F` or `/` to search, `Escape` to clear
 
 ### Settings Page
@@ -165,6 +166,8 @@ Open from popup → **Settings** button. Sections:
 - **Cache** — TTL for dedup cache, manual refresh
 - **Logging** — level, max entries, viewer with filters, export, clear
 - **Danger Zone** — Reset Extension (two-step confirmation)
+
+A floating **scroll-to-top button** appears in the bottom-right corner of this page (and the Queue page) once scrolled down.
 
 ---
 

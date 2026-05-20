@@ -12,9 +12,11 @@ import {DEFAULT_SETTINGS, MSG, STORAGE_KEYS} from "../shared/constants.js";
 import {formatTime} from "../shared/utils.js";
 import {$, sendMessage, showToast, showUndoToast} from "../shared/ui-helpers.js";
 import {applyTheme, initThemeSync} from "../shared/theme-applier.js";
+import {initScrollToTop} from "../shared/scroll-to-top.js";
 
 // Apply persisted ui_theme as early as possible
 initThemeSync();
+initScrollToTop();
 
 // Settings fields (id must match settings key)
 const FIELD_IDS = [
