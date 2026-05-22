@@ -7,6 +7,33 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.0.1] - 2026-05-22
+
+### Fixed
+
+- **"Coming soon" games are no longer auto-collected.** When a Steam
+  store page shows the not-yet-released bubble (`.game_area_comingsoon`,
+  "This game is not yet available on Steam"), the extension now treats
+  it as a non-queueable page type — reusing the same fast path already
+  used for DLC / demo / playtest / delisted pages. Previously such a
+  page had no price element, fell back to its still-present "Free to
+  Play" tag, was classified `f2p`, and was added to the queue by
+  auto-collect before the game had even released.
+- The popup "Add to Queue" button is now also disabled on a coming-soon
+  page (badge: *Coming soon*), so the manual add path is covered too.
+
+### Notes
+
+- A new `coming_soon` auto-collect outcome surfaces an in-page toast
+  (EN + VI), gated by the existing `notify_dlc_demo` toggle — **no new
+  setting** and **no new manifest permissions**.
+- Detection is primarily class-based (`.game_area_comingsoon`), so it is
+  locale-independent; an English notice-text check ("not yet available")
+  is kept as a fallback. Pre-purchase coming-soon pages are caught too —
+  harmless, as they were already blocked as paid.
+
+---
+
 ## [2.0.0] - 2026-05-20
 
 Milestone release marking the end of the 1.x line. **No functional
@@ -990,4 +1017,5 @@ git push origin vX.Y.Z   # workflow does the rest
 [1.17.1]: https://github.com/poli0981/steam-f2p-extension/compare/v1.17.0...v1.17.1
 [1.17.2]: https://github.com/poli0981/steam-f2p-extension/compare/v1.17.1...v1.17.2
 [2.0.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.17.2...v2.0.0
-[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v2.0.0...HEAD
+[2.0.1]: https://github.com/poli0981/steam-f2p-extension/compare/v2.0.0...v2.0.1
+[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v2.0.1...HEAD

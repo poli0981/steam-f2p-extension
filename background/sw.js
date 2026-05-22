@@ -360,6 +360,15 @@ async function handleMessage(message, sender) {
                 return {ok: true, action: "unavailable", message: t.unavailable(name, appid), toastType: "warning"};
             }
 
+            // Coming soon / not yet released — never enqueue. Checked
+            // before the paid gate so a pre-purchase page reads as
+            // "coming soon" rather than "paid".
+            if (cls.is_coming_soon) {
+                if (!settings.notify_dlc_demo) return {ok: true, action: "coming_soon", silent: true};
+                await markAutoCollectCooldown(appid);
+                return {ok: true, action: "coming_soon", message: t.comingSoon(name, appid), toastType: "warning"};
+            }
+
             // Paid — never enqueue, optional toast.
             if (cls.free_type === "paid") {
                 if (!settings.notify_not_free) return {ok: true, action: "not_free", silent: true};

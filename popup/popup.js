@@ -211,6 +211,14 @@ function showDetectedGame(game, dupData = {}) {
         return;
     }
 
+    if (game.is_coming_soon) {
+        appendBadge(detectedBadges, "Coming soon", "warning");
+        addBtn.disabled = true;
+        addBtn.textContent = "Coming Soon — Ignored";
+        detectedDuplicate.style.display = "none";
+        return;
+    }
+
     if (game.is_dlc) {
         appendBadge(detectedBadges, "DLC (ignored)", "warning");
         addBtn.disabled = true;

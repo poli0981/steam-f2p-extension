@@ -93,4 +93,17 @@
         if (!note) return false;
         return note.textContent.toLowerCase().includes("no longer available");
     };
+
+    /**
+     * Is this a "Coming soon" / not-yet-released page?
+     * Steam renders a .game_area_comingsoon bubble on unreleased titles
+     * ("This game is not yet available on Steam"). Such a page can still
+     * carry a "Free to Play" tag, so without this guard it would be
+     * classified f2p and auto-queued before release.
+     */
+    ns.isComingSoon = function () {
+        if (document.querySelector(".game_area_comingsoon")) return true;
+        const notYet = document.querySelector(".not_yet");
+        return !!notYet && notYet.textContent.toLowerCase().includes("not yet available");
+    };
 })();
