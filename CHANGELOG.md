@@ -7,6 +7,35 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.1.0] - 2026-05-22
+
+### Added
+
+- **Queue backup — export and import.** A new **Data** section in
+  Settings can save the pending queue to a timestamped
+  `queue-backup-YYYY-MM-DD.json` file and restore it later — useful
+  before clearing storage or moving to another browser.
+  - **Export Queue** downloads every queued game as formatted JSON.
+  - **Import — Merge** adds games from a backup, skipping any appid
+    already in the queue.
+  - **Import — Replace** discards the current queue first, then loads
+    the backup.
+
+### Notes
+
+- Imports are validated before anything changes: the file is capped at
+  2 MB, must parse as JSON, and each entry must carry a Steam link a
+  valid appid can be read from. A themed confirmation dialog precedes
+  both merge and replace; the result toast reports how many games were
+  imported versus skipped (duplicates, queue-full, or unreadable
+  entries).
+- Restored entries keep their original `added_at` timestamp and any
+  edited fields — import reuses the same `RESTORE_ENTRY` path as the
+  Queue page's undo, and the 150-game cap still applies. No new
+  manifest permissions.
+
+---
+
 ## [2.0.1] - 2026-05-22
 
 ### Fixed
@@ -1018,4 +1047,5 @@ git push origin vX.Y.Z   # workflow does the rest
 [1.17.2]: https://github.com/poli0981/steam-f2p-extension/compare/v1.17.1...v1.17.2
 [2.0.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.17.2...v2.0.0
 [2.0.1]: https://github.com/poli0981/steam-f2p-extension/compare/v2.0.0...v2.0.1
-[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v2.0.1...HEAD
+[2.1.0]: https://github.com/poli0981/steam-f2p-extension/compare/v2.0.1...v2.1.0
+[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v2.1.0...HEAD
