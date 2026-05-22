@@ -29,6 +29,14 @@
         return !!(cell && cell.querySelector("span"));
     };
 
+    /**
+     * Escape regex metacharacters so a string can be embedded in a RegExp
+     * as a literal. Used by anti-cheat word-boundary matching.
+     */
+    ns.escapeRegex = function (str) {
+        return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    };
+
     // ── Cached selector results ──
     // Many selectors are used by multiple modules; cache once per page load.
     const cache = {};
