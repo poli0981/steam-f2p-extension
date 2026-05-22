@@ -7,6 +7,30 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.2.0] - 2026-05-22
+
+### Added
+
+- **GitHub health indicator in the popup.** The header status dot now
+  reflects recent GitHub activity instead of only connection config:
+  - **green** — configured, no GitHub errors in the last 15 minutes
+  - **yellow** — a GitHub error 5–15 minutes ago
+  - **red** — a GitHub error within the last 5 minutes
+  - **grey** — GitHub not configured
+- Hovering the dot shows the most recent relevant log line; clicking it
+  (when configured) opens a themed modal listing the last 10
+  `github`-category log entries. The dot updates live if a push fails
+  while the popup is open.
+
+### Notes
+
+- Health is derived from the existing structured logs via `GET_LOGS`
+  filtered to the `github` category — no new permissions, settings, or
+  message types. A new `infoDialog()` in `shared/modal.js` renders the
+  log modal as a single-button companion to `confirmDialog()`.
+
+---
+
 ## [2.1.0] - 2026-05-22
 
 ### Added
@@ -1048,4 +1072,5 @@ git push origin vX.Y.Z   # workflow does the rest
 [2.0.0]: https://github.com/poli0981/steam-f2p-extension/compare/v1.17.2...v2.0.0
 [2.0.1]: https://github.com/poli0981/steam-f2p-extension/compare/v2.0.0...v2.0.1
 [2.1.0]: https://github.com/poli0981/steam-f2p-extension/compare/v2.0.1...v2.1.0
-[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v2.1.0...HEAD
+[2.2.0]: https://github.com/poli0981/steam-f2p-extension/compare/v2.1.0...v2.2.0
+[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v2.2.0...HEAD
