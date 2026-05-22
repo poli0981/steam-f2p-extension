@@ -9,8 +9,9 @@
  */
 
 import {DEFAULT_SETTINGS, MSG, STORAGE_KEYS} from "../shared/constants.js";
-import {formatTime} from "../shared/utils.js";
+import {formatTime, extractAppId} from "../shared/utils.js";
 import {$, sendMessage, showToast, showUndoToast} from "../shared/ui-helpers.js";
+import {confirmDialog} from "../shared/modal.js";
 import {applyTheme, initThemeSync} from "../shared/theme-applier.js";
 import {initScrollToTop} from "../shared/scroll-to-top.js";
 
@@ -30,6 +31,11 @@ const FIELD_IDS = [
     "notify_lang",
     "log_level", "log_max_entries",
 ];
+
+// ── Queue backup (export / import) ──
+const MAX_IMPORT_BYTES = 2 * 1024 * 1024;          // 2 MB cap on import files
+const QUEUE_BACKUP_FORMAT = "steam-f2p-tracker-queue";
+let importQueueMode = "merge";                     // set by the Import buttons
 
 // ── Undo helper for pruned queue entries ──
 
@@ -399,6 +405,149 @@ async function clearLogs () {
     await loadLogs ();
 }
 
+// ── Queue export / import ──
+
+async function exportQueue () {
+    const resp = await sendMessage (MSG.GET_QUEUE);
+    if (!resp?.ok) {
+        showToast ("Failed to read queue", "error");
+        return;
+    }
+
+    const queue = Array.isArray (resp.data) ? resp.data : [];
+    if (queue.length === 0) {
+        showToast ("Queue is empty — nothing to export", "info");
+        return;
+    }
+
+    const backup = {
+        format:      QUEUE_BACKUP_FORMAT,
+        version:     1,
+        exported_at: new Date ().toISOString (),
+        count:       queue.length,
+        queue,
+    };
+
+    const blob = new Blob ([JSON.stringify (backup, null, 2)], {type: "application/json"});
+    const url = URL.createObjectURL (blob);
+    const a = document.createElement ("a");
+    const date = new Date ().toISOString ()
+                            .slice (0, 10);
+    a.href = url;
+    a.download = `queue-backup-${date}.json`;
+    a.click ();
+    URL.revokeObjectURL (url);
+    showToast (`Exported ${queue.length} game(s)`, "success");
+}
+
+/**
+ * Read + validate a backup file, confirm with the user, then merge or
+ * replace the queue.
+ *
+ * @param {File} file - The user-selected backup file
+ * @param {"merge"|"replace"} mode
+ */
+async function handleQueueImport (file, mode) {
+    if (!file) return;
+
+    if (file.size > MAX_IMPORT_BYTES) {
+        showToast ("File too large — 2 MB maximum", "error");
+        return;
+    }
+
+    let parsed;
+    try {
+        parsed = JSON.parse (await file.text ());
+    }
+    catch {
+        showToast ("Could not read file — not valid JSON", "error");
+        return;
+    }
+
+    // Accept either the wrapped backup object or a bare queue array.
+    const rawEntries = Array.isArray (parsed)
+                       ? parsed
+                       : (parsed && Array.isArray (parsed.queue) ? parsed.queue : null);
+    if (!rawEntries) {
+        showToast ("Not a valid queue backup file", "error");
+        return;
+    }
+
+    // An entry is usable only if a Steam appid can be read from its link.
+    const entries = rawEntries.filter (
+        (e) => e && typeof e === "object" && extractAppId (e.link)
+    );
+    const invalid = rawEntries.length - entries.length;
+    if (entries.length === 0) {
+        showToast ("No valid game entries found in the file", "error");
+        return;
+    }
+
+    const invalidNote = invalid > 0
+                        ? ` ${invalid} unreadable entr${invalid === 1 ? "y" : "ies"} skipped.`
+                        : "";
+    const confirmed = await confirmDialog (
+        mode === "replace"
+        ? {
+            title:         `Replace queue with ${entries.length} game(s)?`,
+            message:       `Your current queue is discarded first and cannot be recovered.${invalidNote}`,
+            confirmLabel:  "Replace",
+            cancelLabel:   "Cancel",
+            danger:        true,
+            defaultAction: "cancel",
+        }
+        : {
+            title:        `Import ${entries.length} game(s)?`,
+            message:      `Games are added to your queue; any already present are skipped. The queue holds at most 150 games.${invalidNote}`,
+            confirmLabel: "Merge",
+            cancelLabel:  "Cancel",
+        }
+    );
+    if (!confirmed) return;
+
+    const buttons = [$ ("#exportQueueBtn"), $ ("#importMergeBtn"), $ ("#importReplaceBtn")];
+    const activeBtn = mode === "replace" ? $ ("#importReplaceBtn") : $ ("#importMergeBtn");
+    const activeHTML = activeBtn.innerHTML;
+    buttons.forEach ((b) => { b.disabled = true; });
+    activeBtn.textContent = "Importing...";
+
+    try {
+        // Replace: clear the current queue first, one entry at a time —
+        // the same message path the Queue page's Clear All uses, so the
+        // toolbar badge stays in sync.
+        if (mode === "replace") {
+            const cur = await sendMessage (MSG.GET_QUEUE);
+            const curQueue = cur?.ok && Array.isArray (cur.data) ? cur.data : [];
+            for (const game of curQueue) {
+                const appid = extractAppId (game.link);
+                if (appid) await sendMessage (MSG.REMOVE_FROM_QUEUE, {appid});
+            }
+        }
+
+        const resp = await sendMessage (MSG.RESTORE_ENTRY, {entries});
+        if (!resp?.ok) {
+            showToast (resp?.error || "Import failed", "error");
+            return;
+        }
+
+        const restored = resp.restored ?? 0;
+        const skipped = resp.skipped ?? 0;
+        if (restored === 0) {
+            showToast (skipped > 0 ? "All games were already in the queue" : "Nothing imported", "warning");
+        }
+        else if (skipped > 0) {
+            showToast (`Imported ${restored} game(s), skipped ${skipped}`, "success");
+        }
+        else {
+            showToast (`Imported ${restored} game(s)`, "success");
+        }
+    }
+    finally {
+        buttons.forEach ((b) => { b.disabled = false; });
+        activeBtn.innerHTML = activeHTML;
+    }
+}
+
 // ── Reset extension ──
 
 let resetTimer = null;
@@ -560,6 +709,27 @@ function bindEvents () {
         .addEventListener ("click", exportLogs);
     $ ("#clearLogsBtn")
         .addEventListener ("click", clearLogs);
+
+    // Queue export / import
+    $ ("#exportQueueBtn")
+        .addEventListener ("click", exportQueue);
+
+    const importQueueFile = $ ("#importQueueFile");
+    $ ("#importMergeBtn")
+        .addEventListener ("click", () => {
+            importQueueMode = "merge";
+            importQueueFile.click ();
+        });
+    $ ("#importReplaceBtn")
+        .addEventListener ("click", () => {
+            importQueueMode = "replace";
+            importQueueFile.click ();
+        });
+    importQueueFile.addEventListener ("change", async () => {
+        const file = importQueueFile.files && importQueueFile.files[0];
+        await handleQueueImport (file, importQueueMode);
+        importQueueFile.value = "";
+    });
 
     // Reset
     $ ("#resetBtn")
