@@ -9,7 +9,7 @@
 import { MSG, QUEUE_MAX, STORAGE_KEYS } from "../shared/constants.js";
 import { truncate } from "../shared/utils.js";
 import { $, sendMessage, showToast } from "../shared/ui-helpers.js";
-import { confirmDialog } from "../shared/modal.js";
+import { confirmDialog, infoDialog } from "../shared/modal.js";
 import { initThemeSync } from "../shared/theme-applier.js";
 
 // Apply the user's ui_theme setting before any paint. initThemeSync is
@@ -37,6 +37,10 @@ function requestOpenPage(path) {
 let lastQueueSize = 0;
 let currentGameAddable = false;
 let isAdding = false;
+
+// Last-known settings, cached so the GitHub status dot can re-render on
+// a logs storage change without re-fetching settings.
+let cachedSettings = {};
 
 const versionEl = $("#version");
 const statusDot = $("#statusDot");
@@ -85,13 +89,133 @@ async function init() {
 
 async function checkConnection() {
     const resp = await sendMessage(MSG.GET_SETTINGS);
-    const s = resp?.ok ? resp.data : {};
+    cachedSettings = resp?.ok ? resp.data : {};
+    await refreshGitHubStatus();
+    return cachedSettings;
+}
+
+// ── GitHub health indicator ──
+// The header status dot reflects recent GitHub activity: green = healthy,
+// yellow = an error 5–15 min ago, red = an error in the last 5 min,
+// grey = not configured. Click (when configured) opens a log modal.
+
+const GH_MINUTE = 60 * 1000;
+
+async function fetchGitHubLogs() {
+    const resp = await sendMessage(MSG.GET_LOGS, { category: "github" });
+    return resp?.ok && Array.isArray(resp.data) ? resp.data : [];
+}
+
+/**
+ * Classify GitHub health from its log history. Logs arrive oldest-first;
+ * an error in the last 5 min outranks an older error (5–15 min), which
+ * outranks a clean window.
+ *
+ * @param {Array<{timestamp: string, level: string, message: string}>} logs
+ * @returns {{state: "online"|"warn"|"error", line: string}}
+ */
+function computeGitHubHealth(logs) {
+    const now = Date.now();
+    let freshError = null;   // error in the last 5 min
+    let staleIssue = null;   // warn/error in the last 15 min
+
+    for (let i = logs.length - 1; i >= 0; i--) {
+        const entry = logs[i];
+        const age = now - new Date(entry.timestamp).getTime();
+        if (age > 15 * GH_MINUTE) break;   // earlier entries are only older
+        if (!staleIssue && (entry.level === "warn" || entry.level === "error")) {
+            staleIssue = entry;
+        }
+        if (!freshError && entry.level === "error" && age <= 5 * GH_MINUTE) {
+            freshError = entry;
+        }
+    }
+
+    if (freshError) return { state: "error", line: formatLogLine(freshError) };
+    if (staleIssue) return { state: "warn", line: formatLogLine(staleIssue) };
+    return { state: "online", line: "" };
+}
+
+function formatLogLine(entry) {
+    const d = new Date(entry.timestamp);
+    const hh = d.getHours().toString().padStart(2, "0");
+    const mm = d.getMinutes().toString().padStart(2, "0");
+    return `${entry.message} (${hh}:${mm})`;
+}
+
+/**
+ * Refresh the header status dot from cached settings + GitHub logs.
+ * Safe to call repeatedly (popup init and the logs storage listener).
+ */
+async function refreshGitHubStatus() {
+    const s = cachedSettings;
     const connected = !!(s.github_owner && s.github_repo && s.github_token);
-    statusDot.className = `status-dot ${connected ? "online" : "offline"}`;
-    statusDot.title = connected
-                      ? `Connected: ${s.github_owner}/${s.github_repo}`
-                      : "GitHub not configured — click Settings";
-    return s;
+
+    if (!connected) {
+        statusDot.className = "status-dot idle";
+        statusDot.title = "GitHub not configured — click Settings";
+        statusDot.removeAttribute("role");
+        statusDot.removeAttribute("tabindex");
+        return;
+    }
+
+    const health = computeGitHubHealth(await fetchGitHubLogs());
+    const repo = `${s.github_owner}/${s.github_repo}`;
+
+    statusDot.className = `status-dot ${health.state}`;
+    statusDot.title = health.line
+                      ? `${repo} — ${health.line}`
+                      : `${repo} — GitHub OK, no recent errors`;
+    statusDot.setAttribute("role", "button");
+    statusDot.tabIndex = 0;
+}
+
+/** Open the themed modal listing the last 10 GitHub log entries. */
+async function showGitHubLogModal() {
+    await infoDialog({
+        title:    "Recent GitHub Activity",
+        bodyNode: buildGitHubLogBody(await fetchGitHubLogs()),
+    });
+}
+
+/**
+ * Build the DOM body for the GitHub log modal — up to 10 entries,
+ * newest first. Messages use textContent (safe against log content).
+ */
+function buildGitHubLogBody(logs) {
+    const list = document.createElement("div");
+    list.className = "gh-log-list";
+
+    if (logs.length === 0) {
+        const empty = document.createElement("p");
+        empty.className = "gh-log-empty text-sm text-muted";
+        empty.textContent = "No GitHub activity logged yet.";
+        list.appendChild(empty);
+        return list;
+    }
+
+    for (const entry of logs.slice(-10).reverse()) {
+        const row = document.createElement("div");
+        row.className = "gh-log-row";
+
+        const time = document.createElement("span");
+        time.className = "gh-log-time";
+        const d = new Date(entry.timestamp);
+        time.textContent =
+            `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+
+        const level = document.createElement("span");
+        level.className = `gh-log-level ${entry.level}`;
+        level.textContent = entry.level;
+
+        const msg = document.createElement("span");
+        msg.className = "gh-log-msg";
+        msg.textContent = entry.message;
+
+        row.append(time, level, msg);
+        list.appendChild(row);
+    }
+    return list;
 }
 
 async function checkFirstRun(settings) {
@@ -357,9 +481,15 @@ function updateQueueUI(size) {
 // (service worker badge update, queue page remove, auto-push), keep the
 // count/bar in sync without requiring a reopen.
 chrome.storage.onChanged.addListener((changes, area) => {
-    if (area !== "local" || !changes[STORAGE_KEYS.QUEUE]) return;
-    const next = changes[STORAGE_KEYS.QUEUE].newValue;
-    updateQueueUI(Array.isArray(next) ? next.length : 0);
+    if (area !== "local") return;
+    if (changes[STORAGE_KEYS.QUEUE]) {
+        const next = changes[STORAGE_KEYS.QUEUE].newValue;
+        updateQueueUI(Array.isArray(next) ? next.length : 0);
+    }
+    // A failed push (or any GitHub log) flips the health dot live.
+    if (changes[STORAGE_KEYS.LOGS]) {
+        refreshGitHubStatus();
+    }
 });
 
 async function loadActivity() {
@@ -512,6 +642,18 @@ function bindEvents() {
     openSettingsBtn.addEventListener("click", () => {
         requestOpenPage("settings/settings.html");
         window.close();
+    });
+
+    // GitHub status dot — click / Enter opens the log modal when configured.
+    statusDot.addEventListener("click", () => {
+        if (statusDot.getAttribute("role") === "button") showGitHubLogModal();
+    });
+    statusDot.addEventListener("keydown", (e) => {
+        if (statusDot.getAttribute("role") !== "button") return;
+        if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            showGitHubLogModal();
+        }
     });
 }
 

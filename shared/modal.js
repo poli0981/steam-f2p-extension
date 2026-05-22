@@ -150,3 +150,88 @@ export function confirmDialog(opts) {
         });
     });
 }
+
+/**
+ * Show a themed, single-button info dialog with a caller-supplied body.
+ *
+ * Unlike confirmDialog(), this presents arbitrary DOM content (pass a
+ * built node as `bodyNode`) and resolves when dismissed — there is no
+ * boolean result. Reuses the same backdrop / animation / focus-restore.
+ *
+ *   await infoDialog({ title: "Recent activity", bodyNode: listEl });
+ *
+ * @param {{title: string, bodyNode?: Node, closeLabel?: string}} opts
+ * @returns {Promise<void>} resolves once the dialog is dismissed
+ */
+export function infoDialog(opts) {
+    const {title, bodyNode, closeLabel = "Close"} = opts || {};
+
+    return new Promise((resolve) => {
+        const previouslyFocused = document.activeElement;
+
+        const backdrop = document.createElement("div");
+        backdrop.className = "modal-backdrop";
+
+        const titleId = `modal-title-${++uidCounter}`;
+
+        const modal = document.createElement("div");
+        modal.className = "modal";
+        modal.setAttribute("role", "dialog");
+        modal.setAttribute("aria-modal", "true");
+        modal.setAttribute("aria-labelledby", titleId);
+
+        const titleEl = document.createElement("h2");
+        titleEl.className = "modal-title";
+        titleEl.id = titleId;
+        titleEl.textContent = title || "";
+
+        const actions = document.createElement("div");
+        actions.className = "modal-actions";
+
+        const closeBtn = document.createElement("button");
+        closeBtn.type = "button";
+        closeBtn.className = "btn btn-primary";
+        closeBtn.textContent = closeLabel;
+        actions.appendChild(closeBtn);
+
+        modal.appendChild(titleEl);
+        if (bodyNode) modal.appendChild(bodyNode);
+        modal.appendChild(actions);
+        backdrop.appendChild(modal);
+        document.body.appendChild(backdrop);
+
+        requestAnimationFrame(() => closeBtn.focus());
+
+        let settled = false;
+        const finish = () => {
+            if (settled) return;
+            settled = true;
+            document.removeEventListener("keydown", onKey);
+            backdrop.classList.add("modal-out");
+            setTimeout(() => {
+                backdrop.remove();
+                if (previouslyFocused && typeof previouslyFocused.focus === "function") {
+                    try { previouslyFocused.focus(); } catch { /* detached */ }
+                }
+                resolve();
+            }, 200);
+        };
+
+        const onKey = (e) => {
+            if (e.key === "Escape" || e.key === "Enter") {
+                e.preventDefault();
+                finish();
+            } else if (e.key === "Tab") {
+                // Single focusable element — keep focus trapped on it.
+                e.preventDefault();
+                closeBtn.focus();
+            }
+        };
+
+        document.addEventListener("keydown", onKey);
+        closeBtn.addEventListener("click", finish);
+        backdrop.addEventListener("click", (e) => {
+            if (e.target === backdrop) finish();
+        });
+    });
+}

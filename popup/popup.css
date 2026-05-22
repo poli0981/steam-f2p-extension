@@ -245,3 +245,79 @@ body {
     font-variant-numeric : tabular-nums;
     font-feature-settings: "tnum";
 }
+
+/* ── GitHub status dot — health states ── */
+/* `online` (green, healthy + pulse) is inherited from theme.css; these
+   add the warn / error / not-configured variants for the health check. */
+.status-dot.warn {
+    background : var(--accent-yellow);
+}
+
+.status-dot.error {
+    background : var(--accent-red);
+    box-shadow : 0 0 6px rgba(248, 113, 113, 0.5);
+}
+
+.status-dot.idle {
+    background : var(--text-muted);
+}
+
+.status-dot[role="button"] {
+    cursor : pointer;
+}
+
+.status-dot[role="button"]:focus-visible {
+    outline        : 2px solid var(--accent);
+    outline-offset : 2px;
+}
+
+/* ── GitHub log modal (infoDialog body) ── */
+.gh-log-list {
+    display        : flex;
+    flex-direction : column;
+    gap            : var(--space-xs);
+    max-height     : 260px;
+    overflow-y     : auto;
+    margin         : var(--space-sm) 0;
+}
+
+.gh-log-row {
+    display     : flex;
+    align-items : flex-start;
+    gap         : var(--space-sm);
+    font-size   : var(--font-xs);
+    line-height : 1.45;
+}
+
+.gh-log-time {
+    color                : var(--text-muted);
+    flex-shrink          : 0;
+    font-variant-numeric : tabular-nums;
+}
+
+.gh-log-level {
+    flex-shrink    : 0;
+    text-transform : uppercase;
+    font-size      : 9px;
+    font-weight    : 700;
+    letter-spacing : 0.4px;
+    padding        : 1px 5px;
+    border-radius  : 4px;
+}
+
+.gh-log-level.error { background : rgba(231, 76, 60, 0.15);  color : var(--accent-red); }
+.gh-log-level.warn  { background : rgba(243, 156, 18, 0.15); color : var(--accent-yellow); }
+.gh-log-level.info  { background : rgba(79, 201, 120, 0.15); color : var(--accent-green); }
+.gh-log-level.debug { background : var(--bg-secondary);      color : var(--text-muted); }
+
+.gh-log-msg {
+    color      : var(--text-secondary);
+    flex       : 1;
+    min-width  : 0;
+    word-break : break-word;
+}
+
+.gh-log-empty {
+    text-align : center;
+    margin     : var(--space-md) 0;
+}
