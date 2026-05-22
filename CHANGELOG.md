@@ -7,6 +7,28 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.3.0] - 2026-05-22
+
+### Fixed
+
+- **Anti-cheat detection no longer false-positives on short codes.**
+  The fallback dictionary scan (Pass 2 of `detectAntiCheat`, used when
+  Steam's structured `.anticheat_section` is absent) matched short
+  codes like `vac` and `kss` with a plain substring search — so a
+  description containing "vacation" was misread as VAC-protected. Pass
+  2 now matches patterns of five characters or fewer on word
+  boundaries; longer and multi-word patterns keep the substring search.
+
+### Notes
+
+- Pass 1 (the structured `.anticheat_section` reader) and
+  `lookupACLabel()` are unchanged — they read focused AC-name strings,
+  not free text, so a substring match is correct there.
+- Adds an `escapeRegex()` helper to `content/lib-dom.js`. No new
+  permissions; `anti_cheat` remains a user-editable queue field.
+
+---
+
 ## [2.2.0] - 2026-05-22
 
 ### Added
@@ -1073,4 +1095,5 @@ git push origin vX.Y.Z   # workflow does the rest
 [2.0.1]: https://github.com/poli0981/steam-f2p-extension/compare/v2.0.0...v2.0.1
 [2.1.0]: https://github.com/poli0981/steam-f2p-extension/compare/v2.0.1...v2.1.0
 [2.2.0]: https://github.com/poli0981/steam-f2p-extension/compare/v2.1.0...v2.2.0
-[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v2.2.0...HEAD
+[2.3.0]: https://github.com/poli0981/steam-f2p-extension/compare/v2.2.0...v2.3.0
+[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v2.3.0...HEAD

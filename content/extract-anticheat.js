@@ -124,7 +124,13 @@
 
         for (const ac of ns.ANTI_CHEAT_DB) {
             for (const pattern of ac.patterns) {
-                if (searchText.includes(pattern)) {
+                // Short codes ("vac", "kss") match on word boundaries so
+                // prose like "vacation" isn't misread as an AC system.
+                // Longer / multi-word patterns keep the substring search.
+                const matched = pattern.length <= 5
+                                ? new RegExp(`\\b${ns.escapeRegex(pattern)}\\b`, "i").test(searchText)
+                                : searchText.includes(pattern);
+                if (matched) {
                     return { label: ac.label, note: ac.label, isKernel: null };
                 }
             }
