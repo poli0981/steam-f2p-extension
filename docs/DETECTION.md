@@ -258,15 +258,26 @@ app page. It is opt-in via `search_detect`.
   re-binding. A short debounce (~220 ms) means a quick scroll-by doesn't
   trigger work.
 - **Row read.** `data-ds-appid`, `.title`, the capsule image, platform
-  icons, and release date come straight off the row. The price signal:
+  icons, and release date come straight off the row. A **Steam Video /
+  series** is recognised here from a `streamingvideo…` platform icon (it
+  streams rather than running on an OS). The price signal otherwise:
   `.discount_final_price.free` → **free** (incl. F2P); a non-zero
   `data-price-final` with a price element → **paid**; an empty discount
   block → **upcoming / skip**.
-- **Status tooltip.** For a free row it sends `CHECK_DUPLICATE` (cached
+- **Non-game guard (v2.6.1).** A search row otherwise can't tell a free
+  game apart from a mod, DLC, soundtrack, or demo — they all show "Free"
+  with normal OS icons (a free mod like tModLoader is field-for-field
+  identical to a free game). So before a free row is offered for queueing,
+  the service worker confirms the app `type` via Steam's `appdetails` API
+  (`CHECK_APP_TYPE`, cached per appid); only `type: "game"` stays addable.
+  Mods, DLC, soundtracks, and demos get a muted "not a game" status with no
+  Add button. An unreachable API **fails open** (treated as a game) so a
+  transient error never blocks a genuine free game.
+- **Status tooltip.** For a free game it sends `CHECK_DUPLICATE` (cached
   per appid for the page) and shows an isolated Shadow-DOM tooltip:
   *free — not tracked* (with an **Add** button), *already in your queue*,
-  or *already in the tracker database*. Paid / upcoming rows show a muted
-  status only.
+  or *already in the tracker database*. Paid / upcoming / non-game rows
+  show a muted status only.
 - **Adding.** Both paths route through the same `AUTO_ADD_FROM_PAGE`
   handler with `source: "search"` and `classification: {free_type: "free_game"}`:
   - an explicit **Add** click → `trigger: "click"` (bypasses the session

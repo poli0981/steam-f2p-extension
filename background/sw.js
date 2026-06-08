@@ -144,6 +144,37 @@ async function checkAutoPush() {
     }
 }
 
+// ── App-type lookup (v2.6.1) ──
+// A Steam search row can't reveal whether an app is a game, mod, video,
+// DLC, soundtrack, or demo — a free mod looks identical to a free game.
+// The search content script asks here before offering to queue a "free"
+// row; only `type: "game"` is queueable. Uses Steam's appdetails API
+// (same origin as the store — already covered by host_permissions).
+// Cached per appid for the worker's lifetime (an app's type is stable).
+const appTypeCache = new Map(); // appid -> {type, is_free}
+
+async function fetchAppType(appid) {
+    if (appTypeCache.has(appid)) return appTypeCache.get(appid);
+    try {
+        const url = `https://store.steampowered.com/api/appdetails?appids=${encodeURIComponent(appid)}&filters=basic&l=english`;
+        const resp = await fetch(url);
+        if (resp.ok) {
+            const json = await resp.json();
+            const entry = json && json[appid];
+            if (entry && entry.success && entry.data) {
+                const result = {type: entry.data.type || null, is_free: !!entry.data.is_free};
+                appTypeCache.set(appid, result); // cache only confirmed results
+                return result;
+            }
+        }
+    } catch (err) {
+        await logWarn("sw", `appdetails type check failed for ${appid}: ${err.message || err}`);
+    }
+    // Fail open (unknown type → treated as a game by the caller). Not cached,
+    // so a later hover retries.
+    return {type: null, is_free: null};
+}
+
 // ── Message router ──
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -271,6 +302,14 @@ async function handleMessage(message, sender) {
                     },
                 };
             }
+        }
+
+        // ── App type (v2.6.1) — search-page non-game guard ──
+        case MSG.CHECK_APP_TYPE: {
+            const appid = data?.appid;
+            if (!appid) return {ok: true, data: {type: null}};
+            const r = await fetchAppType(String(appid));
+            return {ok: true, data: r};
         }
 
         // ── Cache refresh ──
