@@ -106,4 +106,34 @@
         const notYet = document.querySelector(".not_yet");
         return !!notYet && notYet.textContent.toLowerCase().includes("not yet available");
     };
+
+    /**
+     * Is this a Community-Made Mod page (not a standalone game)?
+     * Steam renders a .game_area_mod_bubble ("Community-Made Mod") on these,
+     * yet still shows a "Free To Play" price and an "Install now" button — so
+     * without this guard a mod would be misread as a free game and queued.
+     */
+    ns.isModPage = function () {
+        if (document.querySelector(".game_area_mod_bubble")) return true;
+        const purchase = document.querySelector("#game_area_purchase, .game_area_purchase");
+        return !!purchase && purchase.textContent.toLowerCase().includes("community-made mod");
+    };
+
+    /**
+     * Is this a Steam Video product (not a game)?
+     * These render an <h2>Steam Video</h2> inside the description area and a
+     * "only available in an online streaming format" notice. Anchor on the
+     * heading text — .game_area_description exists on every app page, so the
+     * container alone is not a reliable signal.
+     */
+    ns.isVideoPage = function () {
+        const heads = document.querySelectorAll(
+            ".game_area_description h2, #game_area_description h2"
+        );
+        for (const h of heads) {
+            if (h.textContent.trim().toLowerCase() === "steam video") return true;
+        }
+        const desc = document.querySelector(".game_area_description, #game_area_description");
+        return !!desc && desc.textContent.toLowerCase().includes("only available in an online streaming format");
+    };
 })();
