@@ -58,6 +58,7 @@ Version 2.0 closes out a long modernization arc. Highlights since the early 1.x 
 - **Language** table parsing — per-language support matrix (interface, full audio, subtitles)
 - **Full tag list** — all user-defined tags including hidden overflow tags
 - **Auto-notes**: DLC, anti-cheat name, and kernel level info added to queue entries automatically
+- **Search-page detection** *(opt-in)* — hover a game on a `store.steampowered.com/search` results page to see its free / already-tracked status and queue it without opening the page. Mods, Steam Videos, DLC, and soundtracks are excluded — Steam Videos via their platform icon, everything else via a cached Steam `appdetails` type lookup
 
 ### Queue Management
 
@@ -309,7 +310,7 @@ Steam Store Page
 |-------------------------------------|--------------------------------------|
 | `storage`                           | Local queue, settings, logs, cache   |
 | `activeTab`                         | Read current Steam tab for detection |
-| `host: store.steampowered.com/*`    | Content script on Steam pages        |
+| `host: store.steampowered.com/*`    | Content scripts on Steam app + search pages; `appdetails` type lookups |
 | `host: api.github.com/*`            | Repository API calls                 |
 | `host: raw.githubusercontent.com/*` | Raw file fetch for dedup (>1 MB)     |
 

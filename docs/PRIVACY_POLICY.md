@@ -1,7 +1,7 @@
 # Privacy Policy
 
-**Last updated:** April 2026  
-**Applies to:** Steam F2P Tracker Extension (Chrome/Chromium) — v1.5.1
+**Last updated:** June 2026  
+**Applies to:** Steam F2P Tracker Extension (Chrome/Chromium) — v2.6.2
 
 ---
 
@@ -60,10 +60,14 @@ The Extension communicates with exactly two external services:
 
 ### 1. Steam Store (`store.steampowered.com`)
 
-- **What:** The Extension's content script reads the DOM of Steam store pages you visit to extract game metadata (name,
-  price, genre, etc.).
-- **How:** Standard page reading — no additional HTTP requests are made to Steam servers by the Extension. The content
-  script reads the page that your browser has already loaded.
+- **What:** The Extension's content scripts read the DOM of Steam store **app** and **search** pages you visit to
+  extract game metadata (name, price, genre, etc.).
+- **How:** Mostly standard page reading — the content script reads the page your browser has already loaded. **One
+  exception (v2.6.1+):** on a search results page, when the optional *Search-page detection* feature is enabled and you
+  hover a free game, the Extension sends a request to Steam's public Store Web API
+  (`store.steampowered.com/api/appdetails?appids=<id>&filters=basic`) to read that app's `type`, so it can avoid queuing
+  mods, videos, DLC, and soundtracks. **Only the numeric Steam app ID is sent** — no personal data — the request carries
+  no API key and goes to the same Steam domain you are already browsing. Results are cached in memory for the session.
 - **Privacy policy:** [Steam Privacy Policy](https://store.steampowered.com/privacy_agreement/)
 
 ### 2. GitHub API (`api.github.com`)
@@ -85,7 +89,7 @@ The Extension communicates with exactly two external services:
 |-------------------------------------|------------------------------------------------------------------|
 | `storage`                           | Store settings, queue, logs, and cached data locally             |
 | `activeTab`                         | Read the current Steam store tab to detect game information      |
-| Host: `store.steampowered.com/*`    | Content script runs on Steam store pages to extract game data    |
+| Host: `store.steampowered.com/*`    | Content scripts run on Steam store app + search pages to extract game data; also lets the search feature query the public `appdetails` Web API for an app's type |
 | Host: `api.github.com/*`            | API calls to read/write repository files                         |
 | Host: `raw.githubusercontent.com/*` | Fetch raw file content for deduplication checks (files > 1 MB)   |
 

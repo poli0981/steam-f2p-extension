@@ -1,6 +1,6 @@
 # Disclaimer & Warnings
 
-**Last updated:** April 2026 (v1.5.1)
+**Last updated:** June 2026 (v2.6.2)
 
 This document outlines important disclaimers and warnings regarding the use of the **Steam F2P Tracker Extension** ("the
 Extension"). By installing or using this Extension, you acknowledge that you have read and understood the following.
@@ -32,6 +32,10 @@ is made that the Extension will function correctly in all environments or scenar
   The Extension merely detects and records metadata — it does not review, endorse, or recommend any game.
 - Anti-cheat detection is based on pattern matching against known anti-cheat system names found on Steam store pages.
   Detection may be incomplete or inaccurate.
+- On Steam **search results** pages, the optional hover-detection feature distinguishes games from mods, videos, DLC,
+  and soundtracks using Steam's **undocumented `appdetails` Web API**. This endpoint is not officially supported and may
+  change, be rate-limited, or be temporarily unavailable; when it cannot be reached, the Extension errs toward treating
+  an item as a game (so an occasional non-game could still appear as addable).
 
 ## Companion Tool
 
@@ -75,7 +79,8 @@ deduplication via the `data/index.json` manifest.
 
 ## Network & Third-Party Services
 
-- The Extension communicates with `store.steampowered.com` (to read game pages) and `api.github.com` (to read/write
+- The Extension communicates with `store.steampowered.com` (to read game pages, and — for the optional search-page
+  detection feature — to query the public `appdetails` Web API for an app's type) and `api.github.com` (to read/write
   repository files). These are third-party services with their own terms, privacy policies, and availability guarantees.
 - The Extension has no control over the availability, accuracy, or behavior of these services.
 - Network errors, API changes, or service outages may cause the Extension to fail silently or produce unexpected
