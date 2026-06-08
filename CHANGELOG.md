@@ -7,6 +7,38 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.4.0] - 2026-06-08
+
+### Added
+
+- **Community-made mod and Steam Video detection.** App pages for
+  community-made mods (which carry a `.game_area_mod_bubble`
+  "Community-Made Mod" notice) and Steam Video products (an
+  `<h2>Steam Video</h2>` online-streaming notice) are now recognised as
+  non-game pages. The popup badges them and disables the Add button
+  ("Mod — Not a game" / "Video — Not a game"); auto-collect surfaces an
+  informational toast and never queues them.
+
+### Fixed
+
+- **Mods are no longer mis-queued as free games.** A community-made mod
+  page advertises "Free To Play" with an "Install now" button, so before
+  this release auto-collect read it as a free game and added it to the
+  queue. The new mod guard runs before the free-type classification, so
+  the enqueue is blocked.
+
+### Notes
+
+- Mirrors the existing "not queueable" page-type handling (DLC / demo /
+  playtest / delisted / coming-soon): two new classifiers
+  (`isModPage` / `isVideoPage`) in `content/extract-type.js`, `is_mod` /
+  `is_video` flags threaded through the detector fast path, the
+  service-worker auto-collect gate, and the popup blocked-branches.
+  Reuses the `notify_dlc_demo` toggle and adds EN + VI toast strings —
+  no new permissions, settings, or message types.
+
+---
+
 ## [2.3.0] - 2026-05-22
 
 ### Fixed
@@ -1052,15 +1084,12 @@ git push origin vX.Y.Z   # workflow does the rest
 
 ### Planned / proposed
 
-- **v2.0.0 ribbon-cutting release** — Phase A + Phase B tasks 1-5 all shipped (v1.7.0 - v1.12.0) plus the
-  v1.13.0 queue-dedup improvement. v2.0.0 will be a pure version-bump + CHANGELOG narrative marking the
-  end of the UI refresh arc; no code changes.
+- Search-page hover detection — detect, dedup, and queue free games directly from the
+  store search results page without opening each app page (v2.5.0)
+- `docs/DETECTION.md` — a detailed, authoritative walkthrough of the detection flow (v2.6.0)
 - Firefox (Manifest V3) support
-- Queue JSON export/import (backup / cross-browser migration)
-- GitHub health indicator in popup (surface recent rate-limit / auth errors)
 - Keyboard shortcuts via the `commands` API (`Ctrl+Shift+Q` queue, `Ctrl+Shift+,` settings)
 - PR-time validation workflow (manifest parse, version-bump check, SPDX header check)
-- Anti-cheat false-positive guards (word-boundary regex for short codes like `vac` / `eac`)
 
 ---
 
@@ -1096,4 +1125,5 @@ git push origin vX.Y.Z   # workflow does the rest
 [2.1.0]: https://github.com/poli0981/steam-f2p-extension/compare/v2.0.1...v2.1.0
 [2.2.0]: https://github.com/poli0981/steam-f2p-extension/compare/v2.1.0...v2.2.0
 [2.3.0]: https://github.com/poli0981/steam-f2p-extension/compare/v2.2.0...v2.3.0
-[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v2.3.0...HEAD
+[2.4.0]: https://github.com/poli0981/steam-f2p-extension/compare/v2.3.0...v2.4.0
+[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v2.4.0...HEAD

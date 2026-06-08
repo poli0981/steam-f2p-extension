@@ -369,6 +369,22 @@ async function handleMessage(message, sender) {
                 return {ok: true, action: "coming_soon", message: t.comingSoon(name, appid), toastType: "warning"};
             }
 
+            // Community-made mod — not a standalone game, never enqueue.
+            // (A mod page still advertises "Free To Play", so this guard
+            // must run before the free path below.)
+            if (cls.is_mod) {
+                if (!settings.notify_dlc_demo) return {ok: true, action: "mod", silent: true};
+                await markAutoCollectCooldown(appid);
+                return {ok: true, action: "mod", message: t.mod(name, appid), toastType: "info"};
+            }
+
+            // Steam Video product — not a game, never enqueue.
+            if (cls.is_video) {
+                if (!settings.notify_dlc_demo) return {ok: true, action: "video", silent: true};
+                await markAutoCollectCooldown(appid);
+                return {ok: true, action: "video", message: t.video(name, appid), toastType: "info"};
+            }
+
             // Paid — never enqueue, optional toast.
             if (cls.free_type === "paid") {
                 if (!settings.notify_not_free) return {ok: true, action: "not_free", silent: true};

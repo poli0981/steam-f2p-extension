@@ -343,6 +343,22 @@ function showDetectedGame(game, dupData = {}) {
         return;
     }
 
+    if (game.is_mod) {
+        appendBadge(detectedBadges, "Mod (ignored)", "warning");
+        addBtn.disabled = true;
+        addBtn.textContent = "Mod — Not a game";
+        detectedDuplicate.style.display = "none";
+        return;
+    }
+
+    if (game.is_video) {
+        appendBadge(detectedBadges, "Steam Video", "warning");
+        addBtn.disabled = true;
+        addBtn.textContent = "Video — Not a game";
+        detectedDuplicate.style.display = "none";
+        return;
+    }
+
     if (game.is_dlc) {
         appendBadge(detectedBadges, "DLC (ignored)", "warning");
         addBtn.disabled = true;
