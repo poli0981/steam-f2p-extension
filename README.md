@@ -237,8 +237,10 @@ Multi-developer example:
 
 ## Architecture
 
+> 📖 **How detection works end-to-end** — page-type classification, price / free-type logic, the two anti-cheat passes, the auto-collect gate, and the search-page hover flow — is documented in **[docs/DETECTION.md](docs/DETECTION.md)**.
+
 ```
-steam-f2p-extension/          34 runtime files · 0 runtime dependencies
+steam-f2p-extension/          35 runtime files · 0 runtime dependencies
 ├── manifest.json             Extension config (MV3, ES modules)
 ├── background/               Service worker modules
 │   ├── sw.js                 Entry point & message router
@@ -256,7 +258,8 @@ steam-f2p-extension/          34 runtime files · 0 runtime dependencies
 │   ├── extract-anticheat.js  20-system two-pass AC detection
 │   ├── extract-metadata.js   developer / publisher / release / name / genre
 │   ├── extract-lang-tags.js  languages table + popular tags
-│   └── detector.js           Orchestrator (assembles gameData, sends message)
+│   ├── detector.js           App-page orchestrator (assembles gameData, sends message)
+│   └── search-detector.js    Search-page hover detection → queue (v2.5.0)
 ├── popup/                    Toolbar popup (HTML + CSS + JS)
 ├── queue/                    Full-page queue manager (dual-panel cards, live-refresh)
 ├── settings/                 Full-page settings (live-refresh, focus-aware)

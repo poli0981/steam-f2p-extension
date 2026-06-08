@@ -66,7 +66,7 @@ jobs:
                 'node_modules/*' 'package.json' 'package-lock.json' 'knip.json' \
                 'CHANGELOG.md' 'CONTRIBUTING.md' 'CODE_OF_CONDUCT.md' \
                 'SECURITY.md' 'REQUIREMENTS.md' \
-                'docs/pc_spec.md' 'docs/dev_env.md' 'docs/i18n/*'
+                'docs/pc_spec.md' 'docs/dev_env.md' 'docs/DETECTION.md' 'docs/i18n/*'
           echo "zip_name=$ZIP_NAME" >> "$GITHUB_OUTPUT"
           echo "---- ZIP contents ----"
           unzip -l "$ZIP_NAME"

@@ -7,6 +7,27 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.6.0] - 2026-06-08
+
+### Added
+
+- **`docs/DETECTION.md` — the detection-flow reference.** A detailed,
+  code-level walkthrough of how the extension detects and classifies
+  games: content-script load order and the shared namespace, the
+  page-type fast path (DLC / demo / playtest / delisted / coming-soon /
+  mod / video), price and free-type logic, the two anti-cheat passes, the
+  service-worker auto-collect gate, deduplication (local queue + remote
+  master DB), and the search-page hover flow. Linked from the README's
+  Architecture section.
+
+### Notes
+
+- Documentation only — no extension code changes. `docs/DETECTION.md` is a
+  developer doc and is excluded from the release ZIP, alongside
+  `docs/pc_spec.md` and `docs/dev_env.md`.
+
+---
+
 ## [2.5.0] - 2026-06-08
 
 ### Added
@@ -1118,7 +1139,6 @@ git push origin vX.Y.Z   # workflow does the rest
 
 ### Planned / proposed
 
-- `docs/DETECTION.md` — a detailed, authoritative walkthrough of the detection flow (v2.6.0)
 - Firefox (Manifest V3) support
 - Keyboard shortcuts via the `commands` API (`Ctrl+Shift+Q` queue, `Ctrl+Shift+,` settings)
 - PR-time validation workflow (manifest parse, version-bump check, SPDX header check)
@@ -1159,4 +1179,5 @@ git push origin vX.Y.Z   # workflow does the rest
 [2.3.0]: https://github.com/poli0981/steam-f2p-extension/compare/v2.2.0...v2.3.0
 [2.4.0]: https://github.com/poli0981/steam-f2p-extension/compare/v2.3.0...v2.4.0
 [2.5.0]: https://github.com/poli0981/steam-f2p-extension/compare/v2.4.0...v2.5.0
-[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v2.5.0...HEAD
+[2.6.0]: https://github.com/poli0981/steam-f2p-extension/compare/v2.5.0...v2.6.0
+[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v2.6.0...HEAD
