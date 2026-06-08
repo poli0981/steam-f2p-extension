@@ -7,6 +7,37 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.6.2] - 2026-06-08
+
+### Changed
+
+- **Documented the Steam `appdetails` API dependency introduced in v2.6.1.**
+  The search-page non-game guard calls Steam's public
+  `store.steampowered.com/api/appdetails` endpoint to read an app's type;
+  the bundled policy docs now disclose it:
+  - **Privacy Policy** — the Steam section explains that hovering a free
+    game on a search page sends only the numeric app ID (no personal data,
+    no API key, same Steam domain) to the `appdetails` Web API, cached in
+    memory; the permissions table and the stale version header (v1.5.1 →
+    v2.6.2) were updated.
+  - **Third-Party Notices** — the Steam Store entry now lists the
+    `appdetails` endpoint (undocumented, no key, public catalog data only).
+  - **Disclaimer** — notes the endpoint is unofficial and may change or be
+    rate-limited, and that the lookup fails open (an item is treated as a
+    game when it can't be reached).
+  - **README** — a Search-page detection feature bullet and an updated
+    permissions row.
+  - **REQUIREMENTS** — the network-requirements table notes the
+    `appdetails` request.
+
+### Notes
+
+- Documentation only — no extension code changes, and no new permissions
+  (the endpoint is on `store.steampowered.com`, already in host
+  permissions).
+
+---
+
 ## [2.6.1] - 2026-06-08
 
 ### Fixed
@@ -1208,4 +1239,5 @@ git push origin vX.Y.Z   # workflow does the rest
 [2.5.0]: https://github.com/poli0981/steam-f2p-extension/compare/v2.4.0...v2.5.0
 [2.6.0]: https://github.com/poli0981/steam-f2p-extension/compare/v2.5.0...v2.6.0
 [2.6.1]: https://github.com/poli0981/steam-f2p-extension/compare/v2.6.0...v2.6.1
-[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v2.6.1...HEAD
+[2.6.2]: https://github.com/poli0981/steam-f2p-extension/compare/v2.6.1...v2.6.2
+[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v2.6.2...HEAD

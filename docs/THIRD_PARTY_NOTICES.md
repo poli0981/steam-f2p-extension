@@ -49,7 +49,13 @@ LGPL-3.0:
 
 - **Provider:** Valve Corporation
 - **Terms:** [Steam Subscriber Agreement](https://store.steampowered.com/subscriber_agreement/)
-- **Usage:** Content script reads publicly visible DOM data from Steam store pages.
+- **Usage:**
+  - Content scripts read publicly visible DOM data from Steam store **app** and **search** pages.
+  - On search pages, the service worker queries Steam's public Store Web API endpoint
+    `store.steampowered.com/api/appdetails?appids=<id>&filters=basic` to read an app's `type`
+    (game / mod / video / dlc / …) so that non-games are not added to the queue. This is an
+    **undocumented / unofficial** endpoint, requires **no API key**, returns only public catalog
+    data, and its results are cached in memory.
 - **Note:** Not a bundled dependency. No Steam API keys are used by the Extension.
 
 ---
