@@ -59,6 +59,9 @@
             inMaster: "Already in the tracker database",
             paid: "Not a free game",
             upcoming: "Not yet released",
+            video: "Steam Video — not a game",
+            mod: "Community-made mod — not a game",
+            notGame: "Not a game — skipped",
             add: "Add to queue",
             adding: "Adding…",
             added: "Added to queue",
@@ -71,6 +74,9 @@
             inMaster: "Đã có trong cơ sở dữ liệu",
             paid: "Không phải game miễn phí",
             upcoming: "Chưa phát hành",
+            video: "Video trên Steam — không phải game",
+            mod: "Mod cộng đồng — không phải game",
+            notGame: "Không phải game — bỏ qua",
             add: "Thêm vào hàng đợi",
             adding: "Đang thêm…",
             added: "Đã thêm vào hàng đợi",
@@ -133,12 +139,17 @@
             if (plats.querySelector(".platform_img.linux")) platforms.push("Linux");
         }
 
-        // Price signal: an explicit ".discount_final_price.free" ("Free") marks
-        // a free game (incl. F2P). A non-zero data-price-final with a price
-        // element is paid. Everything else (empty discount block, no price) is
-        // treated as upcoming / unknown and skipped.
+        // Steam Video / series streams rather than running on an OS, so the
+        // row carries a "streamingvideo…" platform icon instead of win/mac/
+        // linux. That is the one non-game type a search row reveals directly
+        // (mods look identical to free games — see the appdetails check in
+        // handleRow). Price signal otherwise: ".discount_final_price.free"
+        // ("Free") marks a provisionally-free game; a non-zero data-price-final
+        // with a price element is paid; an empty discount block is upcoming.
         let status;
-        if (row.querySelector(".discount_final_price.free")) {
+        if (plats && plats.querySelector('[class*="streamingvideo"]')) {
+            status = "video";
+        } else if (row.querySelector(".discount_final_price.free")) {
             status = "free";
         } else {
             const priceWrap = row.querySelector(".search_price_discount_combined");
@@ -237,8 +248,18 @@
     }
 
     // ── Add flow (shared AUTO_ADD_FROM_PAGE handler, source "search") ──
-    // dedup cache keyed by appid for the page session.
-    const dupCache = new Map(); // appid -> {isDuplicate, source}
+    // Per-page caches keyed by appid.
+    const dupCache = new Map();  // appid -> {isDuplicate, source}
+    const typeCache = new Map(); // appid -> {type, is_free}
+
+    // Map a non-"game" appdetails type to a tooltip label. Returns null to
+    // allow the row (a real game, or an unknown/failed lookup that fails open).
+    function nonGameLabel(type, tt) {
+        if (!type || type === "game") return null;
+        if (type === "mod") return tt.mod;
+        if (type === "video" || type === "series" || type === "episode") return tt.video;
+        return tt.notGame; // dlc, music, demo, advertising, hardware, …
+    }
 
     async function doAdd(data, trigger, box) {
         const tt = t();
@@ -289,6 +310,10 @@
         if (!data) { hideTip(); return; }
         const tt = t();
 
+        if (data.status === "video") {
+            showTip(row, (box) => labelOnly(box, tt.video, "muted"));
+            return;
+        }
         if (data.status === "paid") {
             showTip(row, (box) => labelOnly(box, tt.paid, "muted"));
             return;
@@ -298,7 +323,26 @@
             return;
         }
 
-        // Free: resolve tracked status (cached per appid).
+        // The row says "Free" — but a search row can't tell a free game apart
+        // from a mod / DLC / soundtrack / demo (all show "Free" with normal OS
+        // icons). Confirm the app type via the service worker (appdetails,
+        // cached per appid) before offering to queue it; only a real game is
+        // addable. Unknown / failed lookups fail open (treated as a game).
+        let type = typeCache.get(data.appid);
+        if (!type) {
+            showTip(row, (box) => labelOnly(box, tt.checking));
+            const resp = await send("CHECK_APP_TYPE", { appid: data.appid });
+            type = (resp && resp.ok && resp.data) ? resp.data : { type: null };
+            if (type.type) typeCache.set(data.appid, type);
+            if (currentRow !== row) return;
+        }
+        const nonGame = nonGameLabel(type.type, tt);
+        if (nonGame) {
+            showTip(row, (box) => labelOnly(box, nonGame, "muted"));
+            return;
+        }
+
+        // Free game: resolve tracked status (cached per appid).
         let dup = dupCache.get(data.appid);
         if (!dup) {
             showTip(row, (box) => labelOnly(box, tt.checking));

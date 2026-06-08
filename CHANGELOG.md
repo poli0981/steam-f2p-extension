@@ -7,6 +7,33 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.6.1] - 2026-06-08
+
+### Fixed
+
+- **Mods and Steam Videos no longer slip through search-page detection.**
+  On a general (uncategorised) search, Steam mixes mods, videos, DLC, and
+  soundtracks in with games, and the hover detector classified any
+  free-priced row as a free game — so a free mod (e.g. tModLoader) or a
+  Steam Video wrongly offered an **Add to queue** button.
+  - **Steam Videos / series** are now recognised from the row's
+    `streamingvideo…` platform icon — no network call.
+  - Every other "Free" row is verified against Steam's `appdetails` API
+    (cached per appid); only `type: "game"` stays addable, so mods, DLC,
+    soundtracks, and demos show a muted "not a game" status with no Add
+    button.
+
+### Notes
+
+- Adds a `CHECK_APP_TYPE` message handled in the service worker, which
+  fetches `store.steampowered.com/api/appdetails?filters=basic` (already
+  covered by host permissions — no new permission). It is queried only for
+  free-looking, non-video rows and cached per appid; the lookup **fails
+  open** (treated as a game) if the API can't be reached, so a transient
+  error never blocks a genuine free game. App-page detection is unchanged.
+
+---
+
 ## [2.6.0] - 2026-06-08
 
 ### Added
@@ -1180,4 +1207,5 @@ git push origin vX.Y.Z   # workflow does the rest
 [2.4.0]: https://github.com/poli0981/steam-f2p-extension/compare/v2.3.0...v2.4.0
 [2.5.0]: https://github.com/poli0981/steam-f2p-extension/compare/v2.4.0...v2.5.0
 [2.6.0]: https://github.com/poli0981/steam-f2p-extension/compare/v2.5.0...v2.6.0
-[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v2.6.0...HEAD
+[2.6.1]: https://github.com/poli0981/steam-f2p-extension/compare/v2.6.0...v2.6.1
+[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v2.6.1...HEAD
