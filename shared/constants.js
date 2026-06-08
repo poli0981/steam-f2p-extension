@@ -108,6 +108,14 @@ export const DEFAULT_SETTINGS = {
     notify_duplicate: true,
     notify_queue_full: true,
     notify_lang: "auto",  // "auto" | "en" | "vi"
+
+    // Search-page detection (v2.5.0) — opt-in. When ON, hovering a row on
+    // store.steampowered.com/search* shows a free/dedup status tooltip and
+    // an Add button. With search_autoadd_on_hover ALSO on, a sustained hover
+    // auto-queues a free, non-duplicate game (subject to the same per-appid
+    // session cooldown as page auto-collect).
+    search_detect: false,
+    search_autoadd_on_hover: false,
 };
 
 // ── Auto-collect cooldown (v1.16.0) ──

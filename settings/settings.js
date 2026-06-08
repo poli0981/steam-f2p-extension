@@ -29,6 +29,7 @@ const FIELD_IDS = [
     "auto_collect",
     "notify_added", "notify_not_free", "notify_dlc_demo", "notify_duplicate", "notify_queue_full",
     "notify_lang",
+    "search_detect", "search_autoadd_on_hover",
     "log_level", "log_max_entries",
 ];
 
