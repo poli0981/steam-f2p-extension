@@ -7,6 +7,40 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.5.0] - 2026-06-08
+
+### Added
+
+- **Search-page detection — triage free games on hover.** On a
+  `store.steampowered.com/search` results page, hovering a game now shows
+  a small tooltip with its status (free / already in your queue / already
+  in the tracker database) plus an **Add to queue** button, so free games
+  can be queued without opening each app page.
+  - A new **Search-page detection** section in Settings turns it on
+    (opt-in, off by default).
+  - **Add to queue** queues a free, untracked game on click.
+  - **Auto-add free games on hover** (sub-toggle, off by default) queues
+    them on a sustained hover instead, subject to the same per-appid
+    5-minute session cooldown as page auto-collect.
+  - Searches filtered to non-game categories (DLC, soundtracks, playtests,
+    videos, mods, demos) are skipped automatically.
+
+### Notes
+
+- Reuses the existing `CHECK_DUPLICATE` (local queue + remote master DB)
+  and `AUTO_ADD_FROM_PAGE` flows — the latter gains a `source` parameter
+  so the service worker remains the single gate / cooldown / dedup
+  authority for both the app-page and search-page paths. A new content
+  script `content/search-detector.js` runs on `search*` via a second
+  `content_scripts` entry (the existing `store.steampowered.com` host
+  permission already covers it). Two new opt-in settings; no new
+  permissions or message types.
+- Search-row entries carry only what the row exposes (name, capsule
+  image, platforms, release date); developer / publisher / tags /
+  description / anti-cheat stay blank and user-editable.
+
+---
+
 ## [2.4.0] - 2026-06-08
 
 ### Added
@@ -1084,8 +1118,6 @@ git push origin vX.Y.Z   # workflow does the rest
 
 ### Planned / proposed
 
-- Search-page hover detection — detect, dedup, and queue free games directly from the
-  store search results page without opening each app page (v2.5.0)
 - `docs/DETECTION.md` — a detailed, authoritative walkthrough of the detection flow (v2.6.0)
 - Firefox (Manifest V3) support
 - Keyboard shortcuts via the `commands` API (`Ctrl+Shift+Q` queue, `Ctrl+Shift+,` settings)
@@ -1126,4 +1158,5 @@ git push origin vX.Y.Z   # workflow does the rest
 [2.2.0]: https://github.com/poli0981/steam-f2p-extension/compare/v2.1.0...v2.2.0
 [2.3.0]: https://github.com/poli0981/steam-f2p-extension/compare/v2.2.0...v2.3.0
 [2.4.0]: https://github.com/poli0981/steam-f2p-extension/compare/v2.3.0...v2.4.0
-[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v2.4.0...HEAD
+[2.5.0]: https://github.com/poli0981/steam-f2p-extension/compare/v2.4.0...v2.5.0
+[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v2.5.0...HEAD

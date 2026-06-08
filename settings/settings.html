@@ -378,6 +378,44 @@
         </div>
     </section>
 
+    <!-- ── Search-page detection ── -->
+    <section class = "settings-section">
+        <h2 class = "section-heading">
+            <svg
+                    width = "18" height = "18" viewBox = "0 0 24 24" fill = "none" stroke = "currentColor"
+                    stroke-width = "2"
+                    stroke-linecap = "round"
+                    stroke-linejoin = "round"
+            >
+                <circle cx = "11" cy = "11" r = "8"/>
+                <line x1 = "21" y1 = "21" x2 = "16.65" y2 = "16.65"/>
+            </svg>
+            Search-page detection
+            <span class = "badge badge-info" style = "margin-left:8px; font-size:10px">Opt-in</span>
+        </h2>
+        <div class = "toggle-row">
+            <label class = "toggle-label" for = "search_detect">Enable detection on Steam search results</label>
+            <label class = "toggle-switch">
+                <input type = "checkbox" id = "search_detect">
+                <span class = "toggle-slider"></span>
+            </label>
+        </div>
+        <span class = "field-hint" style = "display:block; margin-top:6px;">
+            When on, hovering a game on a <code>store.steampowered.com/search</code> results page shows a tooltip with its free / already-tracked status and an <strong>Add to queue</strong> button — no need to open each game's page. Searches filtered to non-game categories (DLC, soundtracks, playtests, videos, mods, demos) are skipped automatically.
+        </span>
+
+        <div class = "toggle-row" style = "margin-top:var(--space-md);">
+            <label class = "toggle-label" for = "search_autoadd_on_hover">Auto-add free games on hover</label>
+            <label class = "toggle-switch">
+                <input type = "checkbox" id = "search_autoadd_on_hover">
+                <span class = "toggle-slider"></span>
+            </label>
+        </div>
+        <span class = "field-hint" style = "display:block; margin-top:6px;">
+            With this on, a sustained hover over a free, untracked game queues it without clicking <strong>Add</strong>. The same per-appid 5-minute session cooldown applies. Off by default — hovering only shows the tooltip and the Add button.
+        </span>
+    </section>
+
     <!-- ── Logging ── -->
     <section class = "settings-section">
         <h2 class = "section-heading">

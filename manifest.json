@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Steam F2P Tracker",
-  "version": "2.4.0",
+  "version": "2.5.0",
   "description": "Auto-detect, queue, and push free-to-play Steam games to a GitHub tracker repository.",
   "permissions": [
     "storage",
@@ -32,6 +32,17 @@
         "content/extract-metadata.js",
         "content/extract-lang-tags.js",
         "content/detector.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://store.steampowered.com/search*"
+      ],
+      "js": [
+        "content/ns.js",
+        "content/in-page-toast.js",
+        "content/search-detector.js"
       ],
       "run_at": "document_idle"
     }

@@ -315,7 +315,20 @@ async function handleMessage(message, sender) {
         // skip the toast (cooldown, disabled, or sub-toggle off).
         case MSG.AUTO_ADD_FROM_PAGE: {
             const settings = await loadSettings();
-            if (!settings.auto_collect) {
+
+            // v2.5.0: this handler serves both the app-page detector
+            // (source "page", the default) and the search-page hover
+            // feature (source "search"). Each path has its own opt-in gate.
+            const source = data?.source === "search" ? "search" : "page";
+            const trigger = data?.trigger || "auto";
+            if (source === "search") {
+                if (!settings.search_detect) return {ok: true, action: "disabled", silent: true};
+                // Hover-triggered adds need the auto-add sub-toggle; an
+                // explicit Add-button click (trigger "click") is always allowed.
+                if (trigger === "hover" && !settings.search_autoadd_on_hover) {
+                    return {ok: true, action: "disabled", silent: true};
+                }
+            } else if (!settings.auto_collect) {
                 return {ok: true, action: "disabled", silent: true};
             }
 
@@ -326,7 +339,9 @@ async function handleMessage(message, sender) {
             }
 
             const appid = gameData.appid;
-            if (await isInAutoCollectCooldown(appid)) {
+            // Explicit clicks bypass the session cooldown so the user always
+            // gets feedback; auto (page) and hover (search) adds respect it.
+            if (trigger !== "click" && await isInAutoCollectCooldown(appid)) {
                 return {ok: true, action: "cooldown", silent: true};
             }
 
