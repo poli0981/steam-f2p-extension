@@ -52,10 +52,12 @@ LGPL-3.0:
 - **Usage:**
   - Content scripts read publicly visible DOM data from Steam store **app** and **search** pages.
   - On search pages, the service worker queries Steam's public Store Web API endpoint
-    `store.steampowered.com/api/appdetails?appids=<id>&filters=basic` to read an app's `type`
-    (game / mod / video / dlc / …) so that non-games are not added to the queue. This is an
-    **undocumented / unofficial** endpoint, requires **no API key**, returns only public catalog
-    data, and its results are cached in memory.
+    `store.steampowered.com/api/appdetails?appids=<id>&filters=basic,developers,publishers,genres,categories,release_date`
+    to read an app's `type` (game / mod / video / dlc / …) so that non-games are not added to the
+    queue, and — from the same single request — the public catalog metadata (description,
+    developers, publishers, genres, categories, release date, supported languages) used to fill in
+    entries added from the search page. This is an **undocumented / unofficial** endpoint, requires
+    **no API key**, returns only public catalog data, and its results are cached in memory.
 - **Note:** Not a bundled dependency. No Steam API keys are used by the Extension.
 
 ---

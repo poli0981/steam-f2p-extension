@@ -7,6 +7,44 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.7.0] - 2026-06-11
+
+### Added
+
+- **Search-page adds are now fully enriched.** A game queued from the
+  search page used to be a "lightweight" entry — only name, capsule
+  image, platforms, and release date, with everything else blank. The
+  entry now also carries the **description, developer, publisher,
+  release date, supported languages, a pre-filled genre, an
+  online/offline guess, and the full-size header image**, read from the
+  same single Steam `appdetails` request that has powered the hover's
+  non-game check since v2.6.1 — the request just asks for more `filters`
+  sections, so the network footprint (one request per unique free row
+  hovered) is unchanged.
+  - The lookup result is cached in the service worker; the normal
+    hover → Add flow reuses it without any extra request.
+  - The add path now also re-asserts the non-game and coming-soon gates
+    server-side whenever the lookup succeeds (the hover gate fails open,
+    an actual add re-checks) — a blocked add shows a muted status label
+    (mod / video / not yet released / not a game) in the search tooltip
+    instead of enqueueing.
+
+### Notes
+
+- **Fails open:** if the `appdetails` lookup can't be reached at add
+  time, the entry is queued exactly as before (lightweight), with a
+  warning log — never a blocked add.
+- **Deliberately left blank:** user-voted `tags`, the per-language
+  `language_details` matrix, and `anti_cheat` — the appdetails API has
+  no user tags, no subtitle/audio table, and no anti-cheat data, and
+  approximated values must not reach the master DB. `genre` and
+  online/offline remain user-editable in the queue.
+- No new permissions and no new settings — the `CHECK_APP_TYPE` message
+  keeps its v2.6.1 shape; the only content-script change is the new
+  blocked-status tooltip labels in `search-detector.js`.
+
+---
+
 ## [2.6.2] - 2026-06-08
 
 ### Changed
@@ -1240,4 +1278,5 @@ git push origin vX.Y.Z   # workflow does the rest
 [2.6.0]: https://github.com/poli0981/steam-f2p-extension/compare/v2.5.0...v2.6.0
 [2.6.1]: https://github.com/poli0981/steam-f2p-extension/compare/v2.6.0...v2.6.1
 [2.6.2]: https://github.com/poli0981/steam-f2p-extension/compare/v2.6.1...v2.6.2
-[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v2.6.2...HEAD
+[2.7.0]: https://github.com/poli0981/steam-f2p-extension/compare/v2.6.2...v2.7.0
+[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v2.7.0...HEAD

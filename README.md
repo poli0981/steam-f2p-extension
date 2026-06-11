@@ -58,7 +58,7 @@ Version 2.0 closes out a long modernization arc. Highlights since the early 1.x 
 - **Language** table parsing — per-language support matrix (interface, full audio, subtitles)
 - **Full tag list** — all user-defined tags including hidden overflow tags
 - **Auto-notes**: DLC, anti-cheat name, and kernel level info added to queue entries automatically
-- **Search-page detection** *(opt-in)* — hover a game on a `store.steampowered.com/search` results page to see its free / already-tracked status and queue it without opening the page. Mods, Steam Videos, DLC, and soundtracks are excluded — Steam Videos via their platform icon, everything else via a cached Steam `appdetails` type lookup
+- **Search-page detection** *(opt-in)* — hover a game on a `store.steampowered.com/search` results page to see its free / already-tracked status and queue it without opening the page. Mods, Steam Videos, DLC, and soundtracks are excluded — Steam Videos via their platform icon, everything else via a cached Steam `appdetails` lookup. The same lookup fills in the queued entry's description, developer, publisher, release date, languages, genre, and online/offline status, so a search add is as complete as the API allows (user-voted tags, the per-language support matrix, and anti-cheat still need the app page)
 
 ### Queue Management
 
@@ -241,10 +241,11 @@ Multi-developer example:
 > 📖 **How detection works end-to-end** — page-type classification, price / free-type logic, the two anti-cheat passes, the auto-collect gate, and the search-page hover flow — is documented in **[docs/DETECTION.md](docs/DETECTION.md)**.
 
 ```
-steam-f2p-extension/          35 runtime files · 0 runtime dependencies
+steam-f2p-extension/          36 runtime files · 0 runtime dependencies
 ├── manifest.json             Extension config (MV3, ES modules)
 ├── background/               Service worker modules
 │   ├── sw.js                 Entry point & message router
+│   ├── app-info.js           Steam appdetails lookup (type gate + enrichment)
 │   ├── github-api.js         GitHub REST + Git Database API client
 │   ├── gpg-signer.js         GPG key management & commit signing
 │   ├── dedup-checker.js      index.json-driven multi-file deduplication
@@ -310,7 +311,7 @@ Steam Store Page
 |-------------------------------------|--------------------------------------|
 | `storage`                           | Local queue, settings, logs, cache   |
 | `activeTab`                         | Read current Steam tab for detection |
-| `host: store.steampowered.com/*`    | Content scripts on Steam app + search pages; `appdetails` type lookups |
+| `host: store.steampowered.com/*`    | Content scripts on Steam app + search pages; `appdetails` type + catalog lookups |
 | `host: api.github.com/*`            | Repository API calls                 |
 | `host: raw.githubusercontent.com/*` | Raw file fetch for dedup (>1 MB)     |
 

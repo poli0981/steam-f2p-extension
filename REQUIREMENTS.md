@@ -137,7 +137,7 @@ The extension makes requests to the following domains:
 
 | Domain                      | Protocol | Purpose                                | Required                        |
 |-----------------------------|----------|----------------------------------------|---------------------------------|
-| `store.steampowered.com`    | HTTPS    | Content scripts read store pages; search-page detection also queries the public `appdetails` Web API for app type | Yes |
+| `store.steampowered.com`    | HTTPS    | Content scripts read store pages; search-page detection also queries the public `appdetails` Web API for app type + catalog metadata (entry enrichment) | Yes |
 | `api.github.com`            | HTTPS    | Contents API, Git Database API         | Yes                             |
 | `raw.githubusercontent.com` | HTTPS    | Raw file fetch for dedup cache         | Optional (improves dedup speed) |
 
