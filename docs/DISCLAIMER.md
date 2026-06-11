@@ -1,6 +1,6 @@
 # Disclaimer & Warnings
 
-**Last updated:** June 2026 (v2.6.2)
+**Last updated:** June 2026 (v2.7.0)
 
 This document outlines important disclaimers and warnings regarding the use of the **Steam F2P Tracker Extension** ("the
 Extension"). By installing or using this Extension, you acknowledge that you have read and understood the following.
@@ -33,9 +33,11 @@ is made that the Extension will function correctly in all environments or scenar
 - Anti-cheat detection is based on pattern matching against known anti-cheat system names found on Steam store pages.
   Detection may be incomplete or inaccurate.
 - On Steam **search results** pages, the optional hover-detection feature distinguishes games from mods, videos, DLC,
-  and soundtracks using Steam's **undocumented `appdetails` Web API**. This endpoint is not officially supported and may
-  change, be rate-limited, or be temporarily unavailable; when it cannot be reached, the Extension errs toward treating
-  an item as a game (so an occasional non-game could still appear as addable).
+  and soundtracks — and fills in the catalog details (description, developers, publishers, genres, release date,
+  supported languages) of games you add from search — using Steam's **undocumented `appdetails` Web API**. This
+  endpoint is not officially supported and may change, be rate-limited, or be temporarily unavailable; when it cannot
+  be reached, the Extension errs toward treating an item as a game (so an occasional non-game could still appear as
+  addable), and a game added from search is queued with only the data visible on the search row.
 
 ## Companion Tool
 
@@ -80,7 +82,7 @@ deduplication via the `data/index.json` manifest.
 ## Network & Third-Party Services
 
 - The Extension communicates with `store.steampowered.com` (to read game pages, and — for the optional search-page
-  detection feature — to query the public `appdetails` Web API for an app's type) and `api.github.com` (to read/write
+  detection feature — to query the public `appdetails` Web API for an app's type and catalog metadata) and `api.github.com` (to read/write
   repository files). These are third-party services with their own terms, privacy policies, and availability guarantees.
 - The Extension has no control over the availability, accuracy, or behavior of these services.
 - Network errors, API changes, or service outages may cause the Extension to fail silently or produce unexpected

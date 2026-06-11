@@ -264,15 +264,21 @@ app page. It is opt-in via `search_detect`.
   `.discount_final_price.free` → **free** (incl. F2P); a non-zero
   `data-price-final` with a price element → **paid**; an empty discount
   block → **upcoming / skip**.
-- **Non-game guard (v2.6.1).** A search row otherwise can't tell a free
-  game apart from a mod, DLC, soundtrack, or demo — they all show "Free"
-  with normal OS icons (a free mod like tModLoader is field-for-field
-  identical to a free game). So before a free row is offered for queueing,
-  the service worker confirms the app `type` via Steam's `appdetails` API
-  (`CHECK_APP_TYPE`, cached per appid); only `type: "game"` stays addable.
-  Mods, DLC, soundtracks, and demos get a muted "not a game" status with no
-  Add button. An unreachable API **fails open** (treated as a game) so a
-  transient error never blocks a genuine free game.
+- **Non-game guard (v2.6.1) + app-info lookup (v2.7.0).** A search row
+  otherwise can't tell a free game apart from a mod, DLC, soundtrack, or
+  demo — they all show "Free" with normal OS icons (a free mod like
+  tModLoader is field-for-field identical to a free game). So before a
+  free row is offered for queueing, the service worker confirms the app
+  `type` via Steam's `appdetails` API (`CHECK_APP_TYPE`); only
+  `type: "game"` stays addable. Mods, DLC, soundtracks, and demos get a
+  muted "not a game" status with no Add button. An unreachable API
+  **fails open** (treated as a game) so a transient error never blocks a
+  genuine free game. Since v2.7.0 the same single request (handled by
+  [`background/app-info.js`](../background/app-info.js), cached per appid
+  in `appInfoCache`) also returns the app's catalog metadata — the wire
+  response to the content script keeps the v2.6.1 `{type, is_free}`
+  shape, while the full info stays cached SW-side for add-time
+  enrichment.
 - **Status tooltip.** For a free game it sends `CHECK_DUPLICATE` (cached
   per appid for the page) and shows an isolated Shadow-DOM tooltip:
   *free — not tracked* (with an **Add** button), *already in your queue*,
@@ -286,13 +292,25 @@ app page. It is opt-in via `search_detect`.
     on a sustained hover, respecting the cooldown.
 
   The service worker re-runs the same dedup + cooldown + queue logic, so a
-  game already in the master DB is never re-added.
+  game already in the master DB is never re-added. Whenever the add-time
+  lookup succeeds, it also re-asserts the non-game and coming-soon gates
+  from the cached app info (the content script's hover gate fails open) —
+  a blocked add shows a muted status label in the tooltip instead of
+  enqueueing.
 
-> **Lightweight entries.** A search row exposes only name, capsule image,
-> platforms, and release date. Games added from search therefore have
-> **blank developer / publisher / tags / description / anti-cheat** — all
-> of which remain user-editable in the queue. Open the app page (and use
-> the popup) when you want the fully-enriched record.
+> **Enriched entries (v2.7.0).** A search row exposes only name, capsule
+> image, platforms, and release date — but the `appdetails` lookup that
+> already powers the non-game guard carries the rest. A game added from
+> search now gets its **description, developer, publisher, release date,
+> supported languages, a pre-filled genre, an online/offline guess, and
+> the full-size header image** from that same cached request (API values
+> win; row values remain as fallback, and the entry simply stays
+> lightweight if the API can't be reached at add time).
+> **Deliberately still blank:** user-voted `tags`, the per-language
+> `language_details` matrix, and `anti_cheat` — `appdetails` has no user
+> tags, no subtitle/audio table, and no anti-cheat data, and approximated
+> values must not reach the master DB. Open the app page (and use the
+> popup) when you want those too.
 
 ## 6. Field reference
 

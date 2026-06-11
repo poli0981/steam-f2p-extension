@@ -15,6 +15,7 @@ import {clearLogs, exportLogsJSON, getLogs, logError, logInfo, logWarn} from "..
 import {extractAppId} from "../shared/utils.js";
 import {addToQueue, getQueueSize, pruneDuplicates, removeFromQueue, restoreEntries, restoreEntry, updateEntry} from "./queue-manager.js";
 import {checkDuplicate, clearDedupCache, fetchRemoteAppIds, refreshDedupCache} from "./dedup-checker.js";
+import {clearAppInfoCache, fetchAppInfo} from "./app-info.js";
 import {pushQueue, pushQueueUnsigned} from "./push-handler.js";
 import {clearCache as clearGitHubCache} from "./github-api.js";
 import {getKeyMeta, importKey, removeKey, validateKey} from "./gpg-signer.js";
@@ -144,35 +145,24 @@ async function checkAutoPush() {
     }
 }
 
-// ── App-type lookup (v2.6.1) ──
-// A Steam search row can't reveal whether an app is a game, mod, video,
-// DLC, soundtrack, or demo — a free mod looks identical to a free game.
-// The search content script asks here before offering to queue a "free"
-// row; only `type: "game"` is queueable. Uses Steam's appdetails API
-// (same origin as the store — already covered by host_permissions).
-// Cached per appid for the worker's lifetime (an app's type is stable).
-const appTypeCache = new Map(); // appid -> {type, is_free}
-
-async function fetchAppType(appid) {
-    if (appTypeCache.has(appid)) return appTypeCache.get(appid);
-    try {
-        const url = `https://store.steampowered.com/api/appdetails?appids=${encodeURIComponent(appid)}&filters=basic&l=english`;
-        const resp = await fetch(url);
-        if (resp.ok) {
-            const json = await resp.json();
-            const entry = json && json[appid];
-            if (entry && entry.success && entry.data) {
-                const result = {type: entry.data.type || null, is_free: !!entry.data.is_free};
-                appTypeCache.set(appid, result); // cache only confirmed results
-                return result;
-            }
-        }
-    } catch (err) {
-        await logWarn("sw", `appdetails type check failed for ${appid}: ${err.message || err}`);
-    }
-    // Fail open (unknown type → treated as a game by the caller). Not cached,
-    // so a later hover retries.
-    return {type: null, is_free: null};
+// ── Search-add enrichment (v2.7.0) ──
+// Merge appdetails catalog info over the lightweight row data scraped on
+// the search page. API values win (canonical English name, full-size
+// header); row values remain as fallback. `platforms` is deliberately
+// untouched — the row icons are reliable and the current filters don't
+// return it. tags / language_details / anti_cheat stay blank: appdetails
+// has no user-voted tags, no subtitle matrix, and no anti-cheat data, and
+// approximations must not reach the master DB.
+function mergeSearchEnrichment(gameData, info) {
+    gameData.name = info.name || gameData.name;
+    gameData.header_image = info.header_image || gameData.header_image;
+    gameData.release_date = info.release_date || gameData.release_date;
+    gameData.description = info.description;
+    gameData.developer = info.developer;
+    gameData.publisher = info.publisher;
+    gameData.languages = info.languages;
+    gameData.genre = info.genre;          // stays user-editable in the queue
+    gameData.type_game = info.type_game;  // stays user-editable in the queue
 }
 
 // ── Message router ──
@@ -304,12 +294,20 @@ async function handleMessage(message, sender) {
             }
         }
 
-        // ── App type (v2.6.1) — search-page non-game guard ──
+        // ── App info (v2.6.1 type gate, v2.7.0 enrichment) ──
+        // A search row can't tell a free game apart from a free mod, video,
+        // DLC, soundtrack, or demo. The search content script asks here
+        // before offering to queue a "free" row; only `type: "game"` is
+        // queueable. The response keeps the v2.6.1 wire shape — the full
+        // catalog info stays cached SW-side for add-time enrichment.
         case MSG.CHECK_APP_TYPE: {
             const appid = data?.appid;
             if (!appid) return {ok: true, data: {type: null}};
-            const r = await fetchAppType(String(appid));
-            return {ok: true, data: r};
+            const info = await fetchAppInfo(String(appid));
+            return {
+                ok: true,
+                data: info ? {type: info.type, is_free: info.is_free} : {type: null, is_free: null},
+            };
         }
 
         // ── Cache refresh ──
@@ -382,6 +380,27 @@ async function handleMessage(message, sender) {
             // gets feedback; auto (page) and hover (search) adds respect it.
             if (trigger !== "click" && await isInAutoCollectCooldown(appid)) {
                 return {ok: true, action: "cooldown", silent: true};
+            }
+
+            // v2.7.0: a search row carries almost no catalog data, so enrich
+            // the entry from the appdetails lookup that already powered the
+            // hover's type gate (warm cache on the normal hover→add path; at
+            // most one extra request if the worker restarted in between).
+            // On lookup failure the entry simply stays lightweight.
+            if (source === "search") {
+                const info = await fetchAppInfo(String(appid));
+                if (info) {
+                    // Re-assert the non-game gate server-side — the content
+                    // script's gate uses this same lookup and fails open, so
+                    // re-check whenever the add-time lookup succeeds.
+                    if (info.type && info.type !== "game") {
+                        if (info.type === "mod") cls.is_mod = true;
+                        else if (info.type === "video" || info.type === "series" || info.type === "episode") cls.is_video = true;
+                        else cls.free_type = ""; // → "unknown_type" silent return below
+                    }
+                    if (info.coming_soon) cls.is_coming_soon = true;
+                    mergeSearchEnrichment(gameData, info);
+                }
             }
 
             const lang = resolveNotifyLang(settings.notify_lang);
@@ -571,6 +590,7 @@ async function handleMessage(message, sender) {
             detectedGames.clear();
             extensionTabs.clear();
             clearDedupCache();
+            clearAppInfoCache();
             clearGitHubCache();
             await updateBadge();
             return {ok: true};

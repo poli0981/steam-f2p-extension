@@ -295,10 +295,22 @@
             box.className = "tip";
             box.textContent = "";
             labelOnly(box, resp.action === "master_duplicate" ? tt.inMaster : tt.inQueue);
+        } else if (resp && (resp.action === "mod" || resp.action === "video" ||
+                            resp.action === "coming_soon" || resp.action === "unknown_type")) {
+            // v2.7.0: the SW re-asserts the non-game / coming-soon gates at
+            // add time (this hover's CHECK_APP_TYPE may have failed open) —
+            // show the blocked status instead of leaving "Adding…" on screen.
+            const label = resp.action === "mod" ? tt.mod
+                : resp.action === "video" ? tt.video
+                : resp.action === "coming_soon" ? tt.upcoming
+                : tt.notGame;
+            box.className = "tip";
+            box.textContent = "";
+            labelOnly(box, label, "muted");
         }
-        // The service worker already emits a localized in-page toast for
-        // every non-silent outcome (added / queue full / duplicate …), so
-        // we don't double-report here.
+        // Remaining outcomes (queue full, rejected, …) keep the tooltip
+        // as-is; their toast directives have no renderer on search pages
+        // (detector.js only runs on app pages) — a gap that predates v2.7.0.
     }
 
     // ── Hover handling ──
