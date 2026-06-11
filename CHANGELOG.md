@@ -7,6 +7,33 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.8.0] - 2026-06-11
+
+### Added
+
+- **Review markers on hover auto-adds.** A game queued by a sustained
+  hover on the search page (the `search_autoadd_on_hover` flow) happens
+  without a deliberate click, so the entry is now stamped for later
+  review:
+  - `notes` is set to **`[hover-add]`** — greppable in the pushed JSONL
+    and searchable in the queue;
+  - `genre` is set to the placeholder **`temp`** only when the catalog
+    lookup left it blank (a real genre like "Action" is never
+    overwritten), flagging exactly the entries that still need data —
+    including the fail-open path where the lookup was unreachable.
+  Explicit Add-button clicks and app-page adds are unchanged — no
+  marker. Both fields remain user-editable in the queue.
+- **Queue search now also matches `notes`** — typing `hover-add` in the
+  queue filter box lists every marked entry.
+
+### Notes
+
+- No new permissions, settings, or messages. The marker texts live in
+  `shared/constants.js` (`SEARCH_HOVER_NOTE`, `SEARCH_GENRE_PLACEHOLDER`)
+  should they ever need different values.
+
+---
+
 ## [2.7.0] - 2026-06-11
 
 ### Added
@@ -1279,4 +1306,5 @@ git push origin vX.Y.Z   # workflow does the rest
 [2.6.1]: https://github.com/poli0981/steam-f2p-extension/compare/v2.6.0...v2.6.1
 [2.6.2]: https://github.com/poli0981/steam-f2p-extension/compare/v2.6.1...v2.6.2
 [2.7.0]: https://github.com/poli0981/steam-f2p-extension/compare/v2.6.2...v2.7.0
-[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v2.7.0...HEAD
+[2.8.0]: https://github.com/poli0981/steam-f2p-extension/compare/v2.7.0...v2.8.0
+[Unreleased]: https://github.com/poli0981/steam-f2p-extension/compare/v2.8.0...HEAD
