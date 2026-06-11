@@ -126,6 +126,14 @@ export const DEFAULT_SETTINGS = {
 export const AUTO_COLLECT_COOLDOWN_MS = 5 * 60 * 1000;
 export const SESSION_KEY_COOLDOWN_PREFIX = "cooldown:autoadd:";
 
+// ── Search hover-add review markers (v2.8.0) ──
+// A hover auto-add happens without a deliberate user action, so the entry
+// is stamped for later review: the note always, the placeholder genre only
+// when enrichment left genre blank (a real catalog genre is never
+// overwritten). Both stay user-editable in the queue.
+export const SEARCH_HOVER_NOTE = "[hover-add]";
+export const SEARCH_GENRE_PLACEHOLDER = "temp";
+
 // ── Error codes (v1.16.0) ──
 // Sit alongside the human-readable `error` string on rejection. The
 // in-page toast in the content script branches on these to pick the

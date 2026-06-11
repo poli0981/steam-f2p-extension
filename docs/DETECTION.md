@@ -289,7 +289,11 @@ app page. It is opt-in via `search_detect`.
   - an explicit **Add** click → `trigger: "click"` (bypasses the session
     cooldown so the user always gets feedback);
   - **auto-add on hover** (`search_autoadd_on_hover`) → `trigger: "hover"`
-    on a sustained hover, respecting the cooldown.
+    on a sustained hover, respecting the cooldown. Because no deliberate
+    click happened, a hover add is stamped for later review (v2.8.0):
+    `notes: "[hover-add]"` always, plus `genre: "temp"` when enrichment
+    left genre blank — a real catalog genre is never overwritten. Both
+    stay user-editable, and the queue's filter box matches them.
 
   The service worker re-runs the same dedup + cooldown + queue logic, so a
   game already in the master DB is never re-added. Whenever the add-time

@@ -61,6 +61,7 @@ function renderQueue(queue, filter = "") {
             const pubStr = Array.isArray(g.publisher) ? g.publisher.join(", ") : (g.publisher || "");
             return (g.name || "").toLowerCase().includes(q) ||
                    (g.genre || "").toLowerCase().includes(q) ||
+                   (g.notes || "").toLowerCase().includes(q) ||
                    devStr.toLowerCase().includes(q) ||
                    pubStr.toLowerCase().includes(q) ||
                    (g.link || "").includes(q) ||

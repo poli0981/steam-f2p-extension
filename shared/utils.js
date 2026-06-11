@@ -120,7 +120,7 @@ export function makeQueueEntry(detected) {
         genre: detected.genre || "",
         type_game: detected.type_game || "offline",
         anti_cheat: detected.anti_cheat || "-",
-        notes: "",
+        notes: detected.notes || "",
         safe: "?",
 
         // ── Metadata ──

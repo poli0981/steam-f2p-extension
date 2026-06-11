@@ -9,7 +9,7 @@
  * MV3: All imports must be static (no dynamic import()).
  */
 
-import {AUTO_COLLECT_COOLDOWN_MS, ERROR_CODE, MSG, SESSION_KEY_COOLDOWN_PREFIX} from "../shared/constants.js";
+import {AUTO_COLLECT_COOLDOWN_MS, ERROR_CODE, MSG, SEARCH_GENRE_PLACEHOLDER, SEARCH_HOVER_NOTE, SESSION_KEY_COOLDOWN_PREFIX} from "../shared/constants.js";
 import {loadQueue, loadSettings, saveSettings, storageClearAll, updateSettings} from "../shared/storage.js";
 import {clearLogs, exportLogsJSON, getLogs, logError, logInfo, logWarn} from "../shared/logger.js";
 import {extractAppId} from "../shared/utils.js";
@@ -400,6 +400,15 @@ async function handleMessage(message, sender) {
                     }
                     if (info.coming_soon) cls.is_coming_soon = true;
                     mergeSearchEnrichment(gameData, info);
+                }
+
+                // v2.8.0: hover auto-adds get review markers — the note
+                // always, the placeholder genre only when enrichment left
+                // genre blank (incl. the fail-open lightweight path). A
+                // deliberate Add-button click gets no marker.
+                if (trigger === "hover") {
+                    gameData.notes = SEARCH_HOVER_NOTE;
+                    if (!gameData.genre) gameData.genre = SEARCH_GENRE_PLACEHOLDER;
                 }
             }
 

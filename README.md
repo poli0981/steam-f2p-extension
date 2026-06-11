@@ -58,7 +58,7 @@ Version 2.0 closes out a long modernization arc. Highlights since the early 1.x 
 - **Language** table parsing — per-language support matrix (interface, full audio, subtitles)
 - **Full tag list** — all user-defined tags including hidden overflow tags
 - **Auto-notes**: DLC, anti-cheat name, and kernel level info added to queue entries automatically
-- **Search-page detection** *(opt-in)* — hover a game on a `store.steampowered.com/search` results page to see its free / already-tracked status and queue it without opening the page. Mods, Steam Videos, DLC, and soundtracks are excluded — Steam Videos via their platform icon, everything else via a cached Steam `appdetails` lookup. The same lookup fills in the queued entry's description, developer, publisher, release date, languages, genre, and online/offline status, so a search add is as complete as the API allows (user-voted tags, the per-language support matrix, and anti-cheat still need the app page)
+- **Search-page detection** *(opt-in)* — hover a game on a `store.steampowered.com/search` results page to see its free / already-tracked status and queue it without opening the page. Mods, Steam Videos, DLC, and soundtracks are excluded — Steam Videos via their platform icon, everything else via a cached Steam `appdetails` lookup. The same lookup fills in the queued entry's description, developer, publisher, release date, languages, genre, and online/offline status, so a search add is as complete as the API allows (user-voted tags, the per-language support matrix, and anti-cheat still need the app page). Hover **auto**-adds are additionally stamped for review — a `[hover-add]` note, plus a `temp` genre placeholder when the catalog has no genre
 
 ### Queue Management
 
@@ -67,7 +67,7 @@ Version 2.0 closes out a long modernization arc. Highlights since the early 1.x 
 - **Genre tag-select dropdown**: tags from detected game → common genre presets → custom text input
 - **Auto field protection**: 12 auto-detected fields locked from user edits
 - Editable fields: type, anti-cheat, genre, notes, safety rating
-- Search and filter within queue (searches name, genre, developer, publisher, tags)
+- Search and filter within queue (searches name, genre, notes, developer, publisher, tags)
 - **Push Selected** — check any subset of cards and push only those; full queue push also available
 - **Undo** transient toast after *Remove* / *Clear All* — restores the entry verbatim (original `added_at`, notes, edited fields preserved)
 - Card grid UI with thumbnail previews
@@ -165,7 +165,7 @@ Open from popup → **Queue** button. Full-page management with:
 - **▾ Game Info (auto-detected)** — collapsible read-only panel: description, release date, developer, publisher,
   platforms, languages, tags (as chips)
 - **▾ Edit fields** — collapsible editable panel: genre (tag-select dropdown), type, anti-cheat, notes, safety
-- Search bar to filter by name, genre, developer, publisher, or tags
+- Search bar to filter by name, genre, notes, developer, publisher, or tags
 - **Push All** / **Clear All** actions
 - **Scroll-to-top button** — appears in the bottom-right corner once you scroll down a long queue
 - Keyboard: `Ctrl+F` or `/` to search, `Escape` to clear
